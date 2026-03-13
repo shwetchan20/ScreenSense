@@ -1,0 +1,8 @@
+{
+  "apps": {
+    "code.exe|visual studio code": {
+      "threshold_delta": 0.04,
+      "samples": 1
+    }
+  }
+}

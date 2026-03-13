@@ -1,0 +1,311 @@
+# ScreenSense
+
+ScreenSense is a proactive desktop AI co-pilot for Windows. It monitors your screen, analyzes meaningful visual changes with Gemini Vision, and interrupts only when confidence is high and you are idle.
+
+## Features in this MVP
+
+- 3-second screen capture loop (`mss`)
+- Frame differencing with configurable threshold (`numpy`)
+- Gemini Vision structured JSON analysis
+- Confidence + typing-idle + cooldown + dedupe gating before notifications
+- Semantic dedupe for paraphrased repeat interruptions
+- Root coordinator with pluggable sub-agents (`code`, `translate`, `browse`, `general`)
+- Human-in-the-loop action execution (prompted confirmation)
+- Rolling context memory (Firestore-ready abstraction)
+- JSONL audit logs for interrupt/action tuning (`runtime/audit.log.jsonl`)
+- Gemini rate guard (`min interval` + `max calls/min`) for free-tier stability
+- Vision circuit breaker to pause Gemini calls after repeated errors
+- Focus mode and active-window title blocklist (skip Gemini in games/full-focus apps)
+- Action safety policy with preview, confirmation, allowlist, and verification hook
+- ADK-first agent runner bridge with local fallback
+- Optional strict ADK runtime mode (`AGENT_RUNTIME_STRICT=true`) for fail-fast compliance
+- Voice style tuning (`neutral/friendly/humorous`) and optional voice yes/no confirmation
+- Voice provider selection (`VOICE_PROVIDER=auto|coqui_xtts|edge_tts|piper|pyttsx3`) with adaptive phrasing and repeat suppression
+- Edge TTS prosody controls (`VOICE_EDGE_NAME`, `VOICE_EDGE_RATE`, `VOICE_EDGE_PITCH`) for more natural tone
+- Pro voice providers: `coqui_xtts` and `piper` (with fallback chain)
+- Away-mode remote action approval via Telegram (optional)
+- Away-mode remote alert push (Telegram) for important interventions
+- Local fast-path gate to suppress low-signal Gemini calls while user is actively working
+- Optional OCR context layer to enrich Gemini with visible on-screen text
+- Impact-based interrupt scoring (impact + confidence + urgency) before speaking
+- Hybrid reasoning mode: local Qwen primary + Gemini escalation
+- Action Runner v2 with typed multi-step execution and per-step audit logs
+- Planner v2 task graph records (`plan_id`, step criteria, plan lifecycle events)
+
+## Quick Start
+
+1. Create a virtual environment and install dependencies:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e .[dev]
+```
+
+2. Configure environment:
+
+```powershell
+Copy-Item .env.example .env
+# For local-only mode, GEMINI_API_KEY can stay empty.
+# Add GEMINI_API_KEY only if you want Gemini or hybrid escalation.
+```
+
+3. Run:
+
+```powershell
+python -m screensense.app
+```
+
+4. Optional: run backend locally and use HTTP inference mode:
+
+```powershell
+pip install -e .[cloud]
+$env:GEMINI_API_KEY="YOUR_KEY"
+.\scripts\run_backend_local.ps1
+```
+
+Set these in `.env` for desktop app:
+
+```env
+INFERENCE_MODE=http
+INFERENCE_BACKEND_URL=http://127.0.0.1:8080
+INFERENCE_BACKEND_AUTH_TOKEN=
+```
+
+## Notes
+
+- This scaffold is designed for production-oriented iteration and safe extension.
+- Voice input/VAD and UI tray/dashboard are intentionally stubbed behind interfaces.
+- Recommended default mode is `PRODUCT_MODE=observe` with `ASK_BEFORE_ACT=true`.
+- Backend deploy assets included: `Dockerfile.backend`, `cloudrun.backend.yaml`.
+- Persistence sink modes available for audit/memory: `local`, `firestore`, `dual` (with local fallback).
+- Action execution now records step-level results and verification reasons in audit logs.
+- Planning records are emitted as `plan_created` and attached to action events via `plan_id`.
+
+## Hybrid Reasoning (Qwen + Gemini)
+
+Use local-first reasoning with Gemini fallback only when local output is weak/complex:
+
+```env
+REASONING_MODE=hybrid
+LOCAL_LLM_PROVIDER=ollama
+LOCAL_LLM_MODEL=qwen2.5:latest
+LOCAL_LLM_BASE_URL=http://127.0.0.1:11434
+LOCAL_LLM_TIMEOUT_SECONDS=25
+LOCAL_LLM_USE_VISION=true
+LOCAL_LLM_ESCALATE_CONFIDENCE_THRESHOLD=0.72
+HYBRID_FORCE_GEMINI_ON_CRITICAL=true
+```
+
+For stronger local grounding, use a vision-capable Ollama model (example: `qwen2.5vl:7b`).
+
+Modes:
+
+- `REASONING_MODE=local` -> local LLM only
+- `REASONING_MODE=hybrid` -> local first, Gemini escalation
+- `REASONING_MODE=gemini` -> Gemini only
+
+If `GEMINI_API_KEY` is empty, ScreenSense now auto-falls back to local Qwen in `hybrid`/`gemini` modes.
+
+Persona tuning:
+
+```env
+ASSISTANT_NAME=ARIA
+ASSISTANT_PERSONA=calm concise proactive with dry wit
+USER_NAME=Shwet
+```
+
+Adaptive persona memory:
+
+```env
+PERSONA_LEARNING_ENABLED=true
+PERSONA_PROFILE_PATH=runtime/persona_profile.json
+```
+
+ScreenSense updates persona preferences over time from action accepts/denials.
+
+Per-app interruption adaptation:
+
+```env
+APP_ADAPTATION_ENABLED=true
+APP_PROFILE_PATH=runtime/app_preferences.json
+```
+
+ScreenSense learns stricter/looser interrupt thresholds per app from your accepts/denials.
+
+## Voice Providers
+
+`VOICE_PROVIDER` supports:
+
+- `auto` (tries `coqui_xtts`, then `edge_tts`, then `piper`, then `pyttsx3`)
+- `coqui_xtts`
+- `edge_tts`
+- `piper`
+- `pyttsx3`
+
+Voice interrupt aggressiveness:
+
+```env
+VOICE_AGGRESSIVENESS=balanced
+```
+
+Options:
+
+- `quiet` (fewer interruptions)
+- `balanced` (default)
+- `chatty` (more frequent voice interventions)
+
+Voice preset (for consistent Astra-like delivery):
+
+```env
+VOICE_PRESET=astra_like
+```
+
+Apply preset quickly:
+
+```powershell
+.\scripts\apply_astra_voice_profile.ps1
+```
+
+Voice smoke test:
+
+```powershell
+python scripts/voice_smoke_test.py
+```
+
+Pro voice install:
+
+```powershell
+pip install -e .[voice,voice_pro]
+```
+
+Optional Coqui and Piper settings:
+
+```env
+VOICE_COQUI_MODEL=tts_models/multilingual/multi-dataset/xtts_v2
+VOICE_COQUI_SPEAKER_WAV=
+VOICE_COQUI_LANGUAGE=en
+VOICE_COQUI_DEVICE=auto
+VOICE_PIPER_BIN=
+VOICE_PIPER_MODEL_PATH=
+VOICE_PIPER_SPEAKER_ID=0
+VOICE_PIPER_LENGTH_SCALE=1.0
+```
+
+## Remote Approval (Optional)
+
+When user is away, ScreenSense can request action approval on Telegram before executing.
+
+Set in `.env`:
+
+```env
+ENABLE_REMOTE_APPROVAL=true
+REMOTE_APPROVAL_PROVIDER=telegram
+REMOTE_APPROVAL_TIMEOUT_SECONDS=90
+REMOTE_APPROVAL_POLL_SECONDS=2
+TELEGRAM_BOT_TOKEN=123456:ABCDEF...
+TELEGRAM_CHAT_ID=123456789
+```
+
+Reply format in Telegram:
+
+- `YES <ID>` to approve
+- `NO <ID>` to deny
+
+Optional alert push while away:
+
+```env
+ENABLE_REMOTE_ALERTS=true
+REMOTE_ALERT_MIN_PRIORITY=critical
+REMOTE_ALERT_COOLDOWN_SECONDS=300
+```
+
+## OCR Context (Optional)
+
+OCR enriches app context with a short `ui_text_excerpt` before Gemini reasoning.
+
+```env
+ENABLE_OCR_CONTEXT=true
+OCR_PROVIDER=auto
+OCR_MIN_INTERVAL_SECONDS=10
+OCR_MAX_TEXT_CHARS=280
+```
+
+Install OCR package:
+
+```powershell
+pip install -e .[ocr]
+```
+
+If `pytesseract` or native Tesseract binary is unavailable, ScreenSense falls back gracefully.
+
+## Impact Scoring
+
+Interrupts are gated by an impact score before cooldown/dedupe policy.
+
+```env
+ENABLE_IMPACT_SCORING=true
+IMPACT_SCORE_THRESHOLD=0.62
+```
+
+Freshness guard (prevents late/stale async decisions from interrupting):
+
+```env
+STALE_DECISION_MAX_AGE_SECONDS=8
+STALE_DECISION_REQUIRE_SAME_APP=true
+```
+
+## Deployment Helpers
+
+- Local backend runner: `scripts/run_backend_local.ps1`
+- Cloud Run deploy helper: `scripts/deploy_backend_cloudrun.ps1`
+- Architecture diagram: `docs/ARCHITECTURE.md`
+
+## UI Command Center
+
+Run the live dashboard (Ghost/Notify/Dashboard states from runtime events):
+
+```powershell
+.\scripts\run_ui.ps1
+```
+
+Open `http://127.0.0.1:8090`.
+
+## Operational By Tomorrow (Local)
+
+Use this path for a reliable always-on local runtime.
+
+1. Apply reliable local profile:
+
+```powershell
+.\scripts\apply_local_reliable_profile.ps1
+```
+
+2. Run readiness check:
+
+```powershell
+.\scripts\run_agent.ps1 -CheckOnly
+```
+
+3. Start agent foreground:
+
+```powershell
+.\scripts\run_agent.ps1
+```
+
+4. Start background process:
+
+```powershell
+.\scripts\start_agent_background.ps1
+```
+
+5. Enable auto-start at login:
+
+```powershell
+.\scripts\setup_autostart_task.ps1
+```
+
+Logs:
+
+- Runtime audit: `runtime/audit.log.jsonl`
+- Background stdout/stderr: `runtime/agent.out.log`

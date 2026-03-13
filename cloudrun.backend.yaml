@@ -1,0 +1,31 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: screensense-backend
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/cpu-throttling: "true"
+        autoscaling.knative.dev/minScale: "0"
+    spec:
+      containerConcurrency: 10
+      timeoutSeconds: 60
+      containers:
+        - image: REGION-docker.pkg.dev/PROJECT_ID/screensense/screensense-backend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: GEMINI_MODEL
+              value: gemini-2.5-flash
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: GEMINI_API_KEY
+                  key: latest
+            - name: BACKEND_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: BACKEND_AUTH_TOKEN
+                  key: latest
+

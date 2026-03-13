@@ -1,0 +1,8 @@
+{
+  "apps": {
+    "chrome.exe|docs": {
+      "threshold_delta": -0.02,
+      "samples": 1
+    }
+  }
+}

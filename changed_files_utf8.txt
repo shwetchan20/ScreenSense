@@ -1,0 +1,113 @@
+﻿OneDrive/Desktop/screensense/.dockerignore
+OneDrive/Desktop/screensense/.env.example
+OneDrive/Desktop/screensense/.gitignore
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-0/test_app_preference_persists_t0/apps.json
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-0/test_app_preference_threshold_0/apps.json
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-0/test_audit_logger_writes_jsonl0/audit.jsonl
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-0/test_memory_persister_writes_l0/memory.jsonl
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-0/test_persona_feedback_updates_0/persona.json
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-1/test_app_preference_persists_t0/apps.json
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-1/test_app_preference_threshold_0/apps.json
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-1/test_audit_logger_writes_jsonl0/audit.jsonl
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-1/test_memory_persister_writes_l0/memory.jsonl
+OneDrive/Desktop/screensense/.tmp/pytest-of-shwet k/pytest-1/test_persona_feedback_updates_0/persona.json
+OneDrive/Desktop/screensense/Dockerfile.backend
+OneDrive/Desktop/screensense/README.md
+OneDrive/Desktop/screensense/SUBMISSION_CHECKLIST.md
+OneDrive/Desktop/screensense/cloudrun.backend.yaml
+OneDrive/Desktop/screensense/diff.txt
+OneDrive/Desktop/screensense/docs/ARCHITECTURE.md
+OneDrive/Desktop/screensense/pyproject.toml
+OneDrive/Desktop/screensense/scripts/check_runtime.py
+OneDrive/Desktop/screensense/scripts/deploy_backend_cloudrun.ps1
+OneDrive/Desktop/screensense/scripts/run_backend_local.ps1
+OneDrive/Desktop/screensense/scripts/run_ui.ps1
+OneDrive/Desktop/screensense/src/screensense.egg-info/PKG-INFO
+OneDrive/Desktop/screensense/src/screensense.egg-info/SOURCES.txt
+OneDrive/Desktop/screensense/src/screensense.egg-info/dependency_links.txt
+OneDrive/Desktop/screensense/src/screensense.egg-info/requires.txt
+OneDrive/Desktop/screensense/src/screensense.egg-info/top_level.txt
+OneDrive/Desktop/screensense/src/screensense/__init__.py
+OneDrive/Desktop/screensense/src/screensense/agents/__init__.py
+OneDrive/Desktop/screensense/src/screensense/agents/base.py
+OneDrive/Desktop/screensense/src/screensense/agents/browse_agent.py
+OneDrive/Desktop/screensense/src/screensense/agents/code_agent.py
+OneDrive/Desktop/screensense/src/screensense/agents/general_agent.py
+OneDrive/Desktop/screensense/src/screensense/agents/router.py
+OneDrive/Desktop/screensense/src/screensense/agents/translate_agent.py
+OneDrive/Desktop/screensense/src/screensense/app.py
+OneDrive/Desktop/screensense/src/screensense/backend/__init__.py
+OneDrive/Desktop/screensense/src/screensense/backend/app.py
+OneDrive/Desktop/screensense/src/screensense/backend/service.py
+OneDrive/Desktop/screensense/src/screensense/config.py
+OneDrive/Desktop/screensense/src/screensense/core/__init__.py
+OneDrive/Desktop/screensense/src/screensense/core/action_executor.py
+OneDrive/Desktop/screensense/src/screensense/core/action_policy.py
+OneDrive/Desktop/screensense/src/screensense/core/anticipation.py
+OneDrive/Desktop/screensense/src/screensense/core/app_preferences.py
+OneDrive/Desktop/screensense/src/screensense/core/audit_logger.py
+OneDrive/Desktop/screensense/src/screensense/core/capture.py
+OneDrive/Desktop/screensense/src/screensense/core/circuit_breaker.py
+OneDrive/Desktop/screensense/src/screensense/core/coordinator.py
+OneDrive/Desktop/screensense/src/screensense/core/decision_freshness.py
+OneDrive/Desktop/screensense/src/screensense/core/fast_path.py
+OneDrive/Desktop/screensense/src/screensense/core/frame_diff.py
+OneDrive/Desktop/screensense/src/screensense/core/goal_engine.py
+OneDrive/Desktop/screensense/src/screensense/core/impact_scorer.py
+OneDrive/Desktop/screensense/src/screensense/core/interrupt_policy.py
+OneDrive/Desktop/screensense/src/screensense/core/persona.py
+OneDrive/Desktop/screensense/src/screensense/core/presence.py
+OneDrive/Desktop/screensense/src/screensense/core/rate_guard.py
+OneDrive/Desktop/screensense/src/screensense/core/typing_detector.py
+OneDrive/Desktop/screensense/src/screensense/core/ui_context.py
+OneDrive/Desktop/screensense/src/screensense/core/window_context.py
+OneDrive/Desktop/screensense/src/screensense/inference/__init__.py
+OneDrive/Desktop/screensense/src/screensense/inference/base.py
+OneDrive/Desktop/screensense/src/screensense/inference/contracts.py
+OneDrive/Desktop/screensense/src/screensense/inference/http_inference.py
+OneDrive/Desktop/screensense/src/screensense/inference/hybrid_inference.py
+OneDrive/Desktop/screensense/src/screensense/inference/image_codec.py
+OneDrive/Desktop/screensense/src/screensense/inference/local_inference.py
+OneDrive/Desktop/screensense/src/screensense/inference/local_qwen.py
+OneDrive/Desktop/screensense/src/screensense/integrations/__init__.py
+OneDrive/Desktop/screensense/src/screensense/integrations/gemini_client.py
+OneDrive/Desktop/screensense/src/screensense/integrations/remote_approval.py
+OneDrive/Desktop/screensense/src/screensense/integrations/voice.py
+OneDrive/Desktop/screensense/src/screensense/memory/__init__.py
+OneDrive/Desktop/screensense/src/screensense/memory/persistence.py
+OneDrive/Desktop/screensense/src/screensense/memory/store.py
+OneDrive/Desktop/screensense/src/screensense/models.py
+OneDrive/Desktop/screensense/src/screensense/orchestration/__init__.py
+OneDrive/Desktop/screensense/src/screensense/orchestration/adk_runner.py
+OneDrive/Desktop/screensense/src/screensense/storage/__init__.py
+OneDrive/Desktop/screensense/src/screensense/storage/sinks.py
+OneDrive/Desktop/screensense/src/screensense/ui/__init__.py
+OneDrive/Desktop/screensense/src/screensense/ui/dashboard.html
+OneDrive/Desktop/screensense/src/screensense/ui/data.py
+OneDrive/Desktop/screensense/src/screensense/ui/webapp.py
+OneDrive/Desktop/screensense/tests/test_action_executor.py
+OneDrive/Desktop/screensense/tests/test_action_policy.py
+OneDrive/Desktop/screensense/tests/test_adk_runner.py
+OneDrive/Desktop/screensense/tests/test_app_preferences.py
+OneDrive/Desktop/screensense/tests/test_audit_logger.py
+OneDrive/Desktop/screensense/tests/test_circuit_breaker.py
+OneDrive/Desktop/screensense/tests/test_config_parsing.py
+OneDrive/Desktop/screensense/tests/test_decision_freshness.py
+OneDrive/Desktop/screensense/tests/test_fast_path.py
+OneDrive/Desktop/screensense/tests/test_frame_diff.py
+OneDrive/Desktop/screensense/tests/test_gemini_client.py
+OneDrive/Desktop/screensense/tests/test_hybrid_inference.py
+OneDrive/Desktop/screensense/tests/test_image_codec.py
+OneDrive/Desktop/screensense/tests/test_impact_scorer.py
+OneDrive/Desktop/screensense/tests/test_interrupt_policy.py
+OneDrive/Desktop/screensense/tests/test_local_qwen.py
+OneDrive/Desktop/screensense/tests/test_memory_persistence.py
+OneDrive/Desktop/screensense/tests/test_persona.py
+OneDrive/Desktop/screensense/tests/test_presence.py
+OneDrive/Desktop/screensense/tests/test_rate_guard.py
+OneDrive/Desktop/screensense/tests/test_remote_approval.py
+OneDrive/Desktop/screensense/tests/test_router.py
+OneDrive/Desktop/screensense/tests/test_schema.py
+OneDrive/Desktop/screensense/tests/test_ui_context.py
+OneDrive/Desktop/screensense/tests/test_voice.py
+OneDrive/Desktop/screensense/tests/test_window_context.py

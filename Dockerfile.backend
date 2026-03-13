@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY pyproject.toml README.md /app/
+COPY src /app/src
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -e ".[cloud]"
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["uvicorn", "screensense.backend.app:app", "--host", "0.0.0.0", "--port", "8080"]
+
