@@ -21,7 +21,10 @@ dependencies = [
   "pyperclip>=1.9.0",
   "psutil>=6.1.1",
   "requests>=2.32.3",
-  "google-genai>=1.7.0"
+  "google-genai>=1.7.0",
+  "sentence-transformers>=3.0.0",
+  "uiautomation>=2.0.18",
+  "watchdog>=5.0.0"
 ]
 
 [project.optional-dependencies]

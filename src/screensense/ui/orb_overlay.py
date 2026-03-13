@@ -322,10 +322,34 @@ class OrbWidget(QWidget):
         # Position in the bottom right corner as requested
         screen = QApplication.primaryScreen().availableGeometry()
         self.size = 200
-        self.setGeometry(screen.width() - self.size - 50, screen.height() - self.size - 50, self.size, self.size)
+        self.setGeometry(screen.width() - self.size - 50, screen.height() - self.size - 100, self.size, self.size + 50)
         
         self._pulse_scale = 1.0
         self._rotation_angle = 0.0
+        
+        # Create analyze button below orb
+        self.analyze_btn = QPushButton("🔍 Analyze", self)
+        self.analyze_btn.setGeometry(25, self.size + 5, 150, 40)
+        self.analyze_btn.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(100, 100, 255, 180);
+                color: white;
+                border: 2px solid rgba(150, 150, 255, 200);
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: bold;
+                padding: 8px;
+            }
+            QPushButton:hover {
+                background-color: rgba(120, 120, 255, 220);
+                border: 2px solid rgba(180, 180, 255, 255);
+            }
+            QPushButton:pressed {
+                background-color: rgba(80, 80, 200, 200);
+            }
+        """)
+        self.analyze_btn.clicked.connect(self._trigger_analyze)
+        self.analyze_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # Animation for pulsing
         self.pulse_anim = QPropertyAnimation(self, b"pulseScale")
@@ -512,6 +536,17 @@ class OrbWidget(QWidget):
         menu.addAction(exit_action)
 
         menu.exec(event.globalPos())
+    
+    def _trigger_analyze(self):
+        """Trigger manual analysis"""
+        self._ws_thread.send_json({"type": "manual_analyze"})
+        self.analyze_btn.setText("⏳ Analyzing...")
+        self.analyze_btn.setEnabled(False)
+        # Re-enable after 3 seconds
+        QTimer.singleShot(3000, lambda: (
+            self.analyze_btn.setText("🔍 Analyze"),
+            self.analyze_btn.setEnabled(True)
+        ))
 
 def run_overlay(shutdown_event: threading.Event | None = None) -> None:
     app = QApplication(sys.argv)

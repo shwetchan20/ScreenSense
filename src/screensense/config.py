@@ -121,6 +121,25 @@ class Settings:
     stale_decision_require_same_app: bool = True
     demo_force_speak: bool = False
     demo_force_infer_interval_seconds: float = 0.0
+    demo_mode: bool = False
+    
+    # Verified Perception Layer
+    enable_verified_perception: bool = True
+    omniparser_device: str = "cpu"
+    omniparser_model_path: str = ""
+    uia_cache_ttl_seconds: float = 0.5
+    uia_max_depth: int = 5
+    cross_modal_position_tolerance: int = 20
+    cross_modal_text_similarity_threshold: float = 0.8
+    context_max_tokens: int = 4000
+    enable_passive_clipboard: bool = True
+    enable_passive_browser_url: bool = True
+    enable_passive_file_watch: bool = False
+    clipboard_max_chars: int = 500
+    semantic_dedup_similarity_threshold: float = 0.85
+    semantic_dedup_history_size: int = 20
+    semantic_dedup_time_window_seconds: float = 300.0
+    response_max_words: int = 50
 
 
 def _to_bool(value: str | None, default: bool) -> bool:
@@ -427,4 +446,28 @@ def load_settings() -> Settings:
         demo_force_infer_interval_seconds=float(
             os.getenv("DEMO_FORCE_INFER_INTERVAL_SECONDS", "0")
         ),
+        demo_mode=_to_bool(os.getenv("DEMO_MODE"), False),
+        # Verified Perception Layer
+        enable_verified_perception=_to_bool(os.getenv("ENABLE_VERIFIED_PERCEPTION"), True),
+        omniparser_device=os.getenv("OMNIPARSER_DEVICE", "cpu").strip(),
+        omniparser_model_path=os.getenv("OMNIPARSER_MODEL_PATH", "").strip(),
+        uia_cache_ttl_seconds=float(os.getenv("UIA_CACHE_TTL_SECONDS", "0.5")),
+        uia_max_depth=int(os.getenv("UIA_MAX_DEPTH", "5")),
+        cross_modal_position_tolerance=int(os.getenv("CROSS_MODAL_POSITION_TOLERANCE", "20")),
+        cross_modal_text_similarity_threshold=float(
+            os.getenv("CROSS_MODAL_TEXT_SIMILARITY_THRESHOLD", "0.8")
+        ),
+        context_max_tokens=int(os.getenv("CONTEXT_MAX_TOKENS", "4000")),
+        enable_passive_clipboard=_to_bool(os.getenv("ENABLE_PASSIVE_CLIPBOARD"), True),
+        enable_passive_browser_url=_to_bool(os.getenv("ENABLE_PASSIVE_BROWSER_URL"), True),
+        enable_passive_file_watch=_to_bool(os.getenv("ENABLE_PASSIVE_FILE_WATCH"), False),
+        clipboard_max_chars=int(os.getenv("CLIPBOARD_MAX_CHARS", "500")),
+        semantic_dedup_similarity_threshold=float(
+            os.getenv("SEMANTIC_DEDUP_SIMILARITY_THRESHOLD", "0.85")
+        ),
+        semantic_dedup_history_size=int(os.getenv("SEMANTIC_DEDUP_HISTORY_SIZE", "20")),
+        semantic_dedup_time_window_seconds=float(
+            os.getenv("SEMANTIC_DEDUP_TIME_WINDOW_SECONDS", "300")
+        ),
+        response_max_words=int(os.getenv("RESPONSE_MAX_WORDS", "50")),
     )

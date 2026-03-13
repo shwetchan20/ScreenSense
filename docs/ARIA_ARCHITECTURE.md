@@ -1,64 +1,84 @@
 # ARIA Architecture
 
 ## 1. Purpose
-ARIA (inside ScreenSense) is a local-first desktop AI co-pilot designed to be:
+ARIA (inside ScreenSense) is a **fully local, zero-API** desktop AI co-pilot designed to be:
 
 - always-on while the computer is on
 - selective in interruptions (high signal, low noise)
 - safe by default (human-in-the-loop and verification)
 - adaptive over time (persona and app-specific behavior learning)
+- **hallucination-free** through verified perception
 
 The system is not intended to be a chatbot window. It is intended to be a background executive layer over normal desktop work.
 
+## Core Innovation: Verified Perception Layer
+
+ARIA's key architectural innovation is **cross-modal verification** - running two independent perception systems simultaneously and only trusting facts both agree on:
+
+1. **OmniParser** (Microsoft's open-source UI model) - detects interactive elements with bounding boxes
+2. **Windows UI Automation** - ground truth from Windows accessibility tree
+3. **Cross-modal Comparator** - verifies outputs, assigns confidence levels
+
+Only HIGH confidence facts (both sources agree) proceed to reasoning. This eliminates hallucination at the source.
+
 ## 2. Design Principles
 
-1. Local-first, cloud-assisted
-- Local reasoning and automation are preferred for latency, privacy, and cost.
-- Cloud reasoning (Gemini) is used as escalation for hard/ambiguous multimodal cases.
+1. **Fully local, zero-API**
+- All perception and reasoning happens on-device
+- No cloud dependencies, no API quotas, no network required
+- OmniParser, Qwen2.5, and sentence-transformers run locally
 
-2. Safety over speed
-- Every executable action goes through policy and verification.
-- Risky actions are confirmation-gated.
+2. **Verified perception over blind trust**
+- Cross-verify vision model (OmniParser) against ground truth (UIA)
+- Only facts both sources agree on are HIGH confidence
+- LLM reasons on verified facts, not raw screenshots
 
-3. Asynchronous responsiveness
-- Screen loop must keep running even if model calls are slow/failing.
-- Inference is non-blocking and stale outputs are dropped.
+3. Safety over speed
+- Every executable action goes through policy and verification
+- Risky actions are confirmation-gated
 
-4. Observability
-- Major decisions and outcomes are audited.
-- The system records why interruptions/actions were allowed or blocked.
+4. Asynchronous responsiveness
+- Screen loop must keep running even if model calls are slow/failing
+- Inference is non-blocking and stale outputs are dropped
 
-5. Adaptation
-- Tone and interruption behavior adapt from user feedback over time.
+5. Observability
+- Major decisions and outcomes are audited
+- The system records why interruptions/actions were allowed or blocked
+
+6. Adaptation
+- Tone and interruption behavior adapt from user feedback over time
 
 ## 3. High-Level Architecture
 
-Capture + Context Layer
-- `core/capture.py`: screen frame capture
-- `core/frame_diff.py`: change detection gate
-- `core/window_context.py`: active window/process metadata
-- `core/ui_context.py`: OCR enrichment (optional, cached)
+**Verified Perception Layer** (NEW - Core Innovation)
+- `perception/omniparser_client.py`: OmniParser model wrapper for UI element detection
+- `perception/windows_uia.py`: Windows UI Automation adapter for ground truth
+- `perception/cross_modal_comparator.py`: Cross-verifies OmniParser vs UIA outputs
+- `perception/passive_signals.py`: Clipboard, browser URL, file watcher, window metadata
 
-Reasoning Layer
-- `inference/local_qwen.py`: local reasoning (Ollama/Qwen)
-- `inference/hybrid_inference.py`: local-first, Gemini escalation
-- `integrations/gemini_client.py`: multimodal cloud reasoning
-- `core/impact_scorer.py`: impact gating before interrupt
+**Context Assembly Layer** (ENHANCED)
+- `perception/context_assembler.py`: Combines verified facts + passive signals into rich context
+- No raw screenshots sent to LLM - only verified text facts
+
+**Reasoning Layer** (CHANGED - Fully Local)
+- `inference/local_qwen.py`: Qwen2.5 7B text-only reasoning (no vision needed)
+- `perception/semantic_dedup.py`: Embedding-based deduplication using sentence-transformers
+- OmniParser handles vision, Qwen reasons on verified facts only
 
 Coordination Layer
 - `core/coordinator.py`: orchestrates loop, policies, speaking, actions
-- `core/rate_guard.py`: request throttling
+- `core/rate_guard.py`: request throttling (local only, no API limits)
 - `core/circuit_breaker.py`: temporary stop after repeated vision failures
 - `core/decision_freshness.py`: drop stale async results
 
-Action Layer
+Action Layer (ENHANCED)
 - `agents/*`: domain planning (`code`, `browse`, `general`, etc.)
 - `agents/base.py`: typed action model + `ActionStep`
 - `core/action_policy.py`: mode/risk allow/deny
-- `core/action_executor.py`: Action Runner v2 (step execution + verification)
+- `core/action_executor.py`: Action Runner v2 with OmniParser bounding box precision
 
 Interaction Layer
-- `integrations/voice.py`: multi-engine TTS stack
+- `integrations/voice.py`: multi-engine TTS stack (Edge TTS - Jenny Neural)
 - `integrations/remote_approval.py`: remote approval + alerts (Telegram)
 - Native-first direction: tray/overlay pending; web dashboard kept debug-only
 

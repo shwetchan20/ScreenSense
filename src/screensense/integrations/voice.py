@@ -298,7 +298,7 @@ class VoiceOutput:
         self._engine.runAndWait()
 
     def _speak_edge_tts(self, text: str) -> bool:
-        if edge_tts is None or playsound is None:
+        if edge_tts is None:
             return False
         tmp_path = ""
         try:
@@ -310,14 +310,58 @@ class VoiceOutput:
                 rate=self._settings.edge_rate,
                 pitch=self._settings.edge_pitch,
             )
-            asyncio.run(communicate.save(tmp_path))
-            playsound(tmp_path)
-            return True
+            # Fix: Properly await the coroutine in a new event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(communicate.save(tmp_path))
+            finally:
+                loop.close()
+            
+            # Use Windows Media Player instead of playsound (more reliable)
+            if winsound is not None:
+                # Try using Windows Media Player via COM
+                try:
+                    import subprocess
+                    subprocess.run(
+                        ["powershell", "-c", f"(New-Object Media.SoundPlayer '{tmp_path}').PlaySync()"],
+                        check=False,
+                        timeout=10,
+                        capture_output=True
+                    )
+                    return True
+                except Exception:
+                    pass
+            
+            # Fallback to playsound if available
+            if playsound is not None:
+                try:
+                    playsound(tmp_path)
+                    return True
+                except Exception:
+                    pass
+            
+            # Last resort: use pygame if available
+            try:
+                import pygame
+                pygame.mixer.init()
+                pygame.mixer.music.load(tmp_path)
+                pygame.mixer.music.play()
+                while pygame.mixer.music.get_busy():
+                    pygame.time.Clock().tick(10)
+                return True
+            except Exception:
+                pass
+            
+            return False
         except Exception:
             return False
         finally:
             if tmp_path and os.path.exists(tmp_path):
                 try:
+                    # Small delay to ensure file is not in use
+                    import time
+                    time.sleep(0.5)
                     os.remove(tmp_path)
                 except OSError:
                     pass

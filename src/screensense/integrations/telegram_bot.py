@@ -20,6 +20,7 @@ from screensense.core.capture import ScreenCapturer
 from screensense.core.action_gate import ActionGate
 from screensense.memory.sqlite_store import SQLiteMemoryStore
 from screensense.perception.ui_context import UiAutomationContext
+from screensense.inference.local_qwen import LocalQwenInferenceClient
 from screensense.skills.code_ops import CodeOps
 from screensense.skills.browser_ops import BrowserOps
 from screensense.skills.file_ops import FileOps
@@ -88,6 +89,18 @@ class ARIATelegramBot:
         self._goal_callback: Callable[[str], str | None] | None = None
         self._health_callback: Callable[[], str] | None = None
         self._killlocal_callback: Callable[[], str] | None = None
+        
+        # Initialize LocalQwenInferenceClient with verified perception
+        self._inference_client = LocalQwenInferenceClient(
+            provider=settings.local_llm_provider,
+            model=settings.local_llm_model,
+            base_url=settings.local_llm_base_url,
+            timeout_seconds=settings.local_llm_timeout_seconds,
+            use_vision=False,  # Telegram doesn't need vision
+            ui_context_extractor=self._ui_context_extractor,
+            enable_verified_perception=settings.enable_verified_perception,
+        )
+        
         skill_allowlist = {
             "read_file",
             "list_directory",
@@ -827,44 +840,94 @@ class ARIATelegramBot:
         web_result: str = "",
     ) -> str:
         ui_context = ui_context or {}
-        app = str(ui_context.get("active_app") or "Code.exe")
-        file = str(ui_context.get("current_file") or "store.py")
-        project = str(ui_context.get("project") or "screensense")
-
-        # Pure few-shot patterns, no explicit instructions.
+        app = str(ui_context.get("active_app") or "unknown")
+        file = str(ui_context.get("current_file") or "")
+        project = str(ui_context.get("project") or "")
+        window_title = str(ui_context.get("window_title") or "")
+        terminal_text = str(ui_context.get("terminal_output") or "")[:200]
+        errors = str(ui_context.get("error_list") or "")[:200]
+        
+        # Build context description
+        context_parts = []
+        if app:
+            context_parts.append(f"App: {app}")
+        if file:
+            context_parts.append(f"File: {file}")
+        if project:
+            context_parts.append(f"Project: {project}")
+        if window_title:
+            context_parts.append(f"Window: {window_title}")
+        if terminal_text:
+            context_parts.append(f"Terminal: {terminal_text}")
+        if errors:
+            context_parts.append(f"Errors: {errors}")
+        
+        context_str = " | ".join(context_parts) if context_parts else "Desktop"
+        
+        # Include recent history for context
+        history_str = ""
+        if history:
+            recent = history[-3:]  # Last 3 exchanges
+            history_str = "\n".join([f"user: {u}\naria: {a}" for u, a in recent])
+            history_str = f"{history_str}\n---\n"
+        
+        # Build prompt
         base = (
-            "screen: Code.exe, store.py, screensense\n"
-            "user: hey\n"
-            "aria: store.py open in screensense, terminal is clean.\n"
-            "---\n"
-            "screen: Code.exe, store.py, screensense\n"
-            "user: what am I working on\n"
-            "aria: store.py in screensense, VS Code active.\n"
-            "---\n"
-            "screen: Code.exe, store.py, screensense\n"
-            "user: any errors\n"
-            "aria: no errors detected, terminal is idle.\n"
-            "---\n"
-            f"screen: {app}, {file}, {project}\n"
+            f"You are ARIA, {self._settings.user_name}'s desktop AI assistant.\n"
+            f"Current screen context: {context_str}\n"
+            f"Session goal: {session_goal or 'none'}\n\n"
+            f"{history_str}"
             f"user: {user_text}\n"
-            "aria:"
+            f"aria:"
         )
-
-        web_block = web_result.strip()
-        if web_block:
-            return base + f"\n---\nweb: {web_block[:900]}"
+        
+        if web_result.strip():
+            base += f"\n[Web search results: {web_result[:500]}]"
+        
         return base
-
     def _generate_response(self, prompt: str) -> str:
+        """Generate response using LocalQwenInferenceClient with verified perception"""
         if self._settings.reasoning_mode in {"local", "hybrid"}:
-            local = self._generate_local_qwen(prompt)
-            if local:
-                return local
+            # Use verified perception through inference client
+            try:
+                # Capture current screen
+                capturer = self._get_capturer()
+                frame = capturer.capture_rgb()
+                
+                # Build context from prompt
+                context = {
+                    "user_name": self._settings.user_name,
+                    "project_name": "screensense",
+                    "session_goal": self._get_today_goal() or "none",
+                }
+                
+                # Extract window context from prompt
+                if "App:" in prompt:
+                    parts = prompt.split("App:")[1].split("|")[0].strip()
+                    context["process_name"] = parts
+                if "Window:" in prompt:
+                    parts = prompt.split("Window:")[1].split("|")[0].strip()
+                    context["window_title"] = parts
+                
+                # Use inference client with verified perception
+                decision = self._inference_client.analyze(frame, app_context=context)
+                
+                # Return the message from decision
+                if decision.message.strip():
+                    return decision.message
+                
+                # Fallback to old method if no message
+                return self._generate_local_qwen_fallback(prompt)
+            except Exception as e:
+                print(f"[TG] Inference client failed: {e}")
+                return self._generate_local_qwen_fallback(prompt)
+        
         if self._settings.reasoning_mode in {"gemini", "hybrid"}:
             return self._generate_gemini(prompt)
         return ""
-
-    def _generate_local_qwen(self, prompt: str) -> str:
+    
+    def _generate_local_qwen_fallback(self, prompt: str) -> str:
+        """Fallback to direct Ollama API call"""
         if self._settings.local_llm_provider != "ollama":
             return ""
         try:
@@ -880,8 +943,9 @@ class ARIATelegramBot:
                         {
                             "role": "system",
                             "content": (
-                                "You are ARIA, a laptop AI that speaks in short, direct observations "
-                                "about the CURRENT screen only. No greetings, no questions, no small talk."
+                                "You are ARIA, a laptop AI that speaks in 2-3 sentence descriptive observations "
+                                "about the CURRENT screen. Be specific and reference actual facts. "
+                                "Provide actionable insights when possible."
                             ),
                         },
                         {
@@ -890,13 +954,12 @@ class ARIATelegramBot:
                         },
                     ],
                     "stream": False,
-                    "options": {"temperature": 0.3},
+                    "options": {"temperature": 0.3, "num_predict": 512},
                 },
                 timeout=self._settings.local_llm_timeout_seconds,
             )
             response.raise_for_status()
             data = response.json()
-            # Ollama /api/chat returns a single message with content (string or list of parts).
             msg = data.get("message") or {}
             content = msg.get("content", "")
             if isinstance(content, list):

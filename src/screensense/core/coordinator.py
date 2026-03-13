@@ -53,6 +53,7 @@ from screensense.skills.file_ops import FileOps
 from screensense.skills.code_ops import CodeOps
 from screensense.skills.browser_ops import BrowserOps
 from screensense.skills.system_ops import SystemOps
+from screensense.demo_responses import get_demo_response
 
 _shutdown = False
 
@@ -266,6 +267,13 @@ class RootCoordinator:
             self._telegram_bot.set_goal_callback(self._handle_goal_capture)
             self._telegram_bot.set_health_callback(self._health.status_summary)
             self._telegram_bot.set_killlocal_callback(self._kill_local_llm)
+        
+        # Window change detection for auto-analysis
+        self._last_window_title = ""
+        self._last_active_app = ""
+        self._window_change_ts = 0.0
+        self._window_change_delay = 6.0  # 6 seconds after window change
+        self._manual_analyze_requested = False
 
     @property
     def shutdown_event(self) -> threading.Event:
@@ -406,9 +414,80 @@ class RootCoordinator:
                 "window_title": active_window.title or "",
             }
         self._health.note_ui_automation(bool(ui_result and ui_result.ok))
+        
+        # DEMO MODE INTERCEPT - Bypass entire inference pipeline
+        if self._settings.demo_mode:
+            window_title = str(ui_context.get("window_title", ""))
+            clipboard_content = None
+            
+            # Try to get clipboard content
+            if self._settings.enable_passive_clipboard:
+                try:
+                    import pyperclip
+                    clipboard_content = pyperclip.paste()
+                except Exception:
+                    pass
+            
+            # Check for demo trigger
+            demo_response = get_demo_response(window_title, clipboard_content)
+            if demo_response:
+                print(f"[ScreenSense] DEMO MODE: Triggered by '{window_title[:50]}'")
+                print(f"[ScreenSense] DEMO MODE: Speaking: {demo_response[:100]}")
+                
+                # Speak immediately, bypassing all inference
+                self._voice.speak_event(
+                    demo_response,
+                    context="Demo",
+                    confidence=1.0,
+                )
+                
+                # Log for audit
+                self._audit.log(
+                    "demo_mode_triggered",
+                    {
+                        "window_title": window_title,
+                        "clipboard_preview": clipboard_content[:50] if clipboard_content else None,
+                        "response": demo_response,
+                        "loop_count": loop_count,
+                    },
+                )
+                
+                # Skip rest of inference pipeline
+                return
+        
         semantic = score_semantic_change(self._prev_ui_context, ui_context)
         self._prev_ui_context = ui_context
         change_score = semantic.score
+        
+        # Detect window change for auto-analysis
+        current_window = ui_context.get("window_title", "")
+        current_app = ui_context.get("active_app", "")
+        window_changed = (
+            current_window != self._last_window_title or 
+            current_app != self._last_active_app
+        )
+        
+        if window_changed:
+            self._last_window_title = current_window
+            self._last_active_app = current_app
+            self._window_change_ts = time.time()
+            print(f"[ScreenSense] Window changed to: {current_app} - {current_window}")
+        
+        # Check if we should force analysis after window change
+        force_window_analysis = False
+        if self._window_change_ts > 0:
+            elapsed_since_change = time.time() - self._window_change_ts
+            if elapsed_since_change >= self._window_change_delay:
+                force_window_analysis = True
+                self._window_change_ts = 0.0  # Reset
+                print(f"[ScreenSense] Auto-analyzing after window change ({elapsed_since_change:.1f}s)")
+        
+        # Check for manual analyze request
+        if self._manual_analyze_requested:
+            force_infer = True
+            self._manual_analyze_requested = False
+            print("[ScreenSense] Manual analyze requested")
+        
         print(
             f"[ScreenSense] loop={loop_count} change_score={change_score:.2f} "
             f"reasons={','.join(semantic.reasons) if semantic.reasons else 'none'}"
@@ -451,6 +530,10 @@ class RootCoordinator:
             elapsed = time.time() - self._last_inference_submit_ts
             if elapsed >= self._settings.demo_force_infer_interval_seconds:
                 force_infer = True
+        
+        # Force analysis after window change
+        if force_window_analysis:
+            force_infer = True
 
         if change_score <= 0.3 and not force_infer:
             self._audit.log(
@@ -463,12 +546,12 @@ class RootCoordinator:
             )
             return
         if force_infer and change_score <= 0.3:
+            reason = "window_change_auto_analyze" if force_window_analysis else "demo_force_inference"
             self._audit.log(
-                "demo_force_inference",
+                reason,
                 {
                     "change_score": round(change_score, 2),
                     "threshold": 0.3,
-                    "interval_seconds": self._settings.demo_force_infer_interval_seconds,
                 },
             )
 
@@ -803,6 +886,13 @@ class RootCoordinator:
             typing_seconds_since=typing_seconds,
             session_minutes=snapshot.session_minutes,
         )
+        
+        # DEBUG: Log interrupt decision
+        print(f"[Interrupt] allow={interrupt.allow_interrupt} reason={interrupt.reason}")
+        print(f"[Interrupt] score={interrupt.score:.3f} impact={interrupt.impact:.3f} urgency={interrupt.urgency:.3f}")
+        print(f"[Decision] should_interrupt={decision.should_interrupt} conf={decision.confidence:.2f} priority={decision.priority}")
+        print(f"[Decision] message={decision.message[:100]}")
+
         if not interrupt.allow_interrupt and not self._settings.demo_force_speak:
             self._audit.log(
                 "interrupt_evaluated",
@@ -1187,6 +1277,7 @@ class RootCoordinator:
             timeout_seconds=self._settings.local_llm_timeout_seconds,
             use_vision=self._settings.local_llm_use_vision,
             ui_context_extractor=self._build_ui_context_extractor(),
+            enable_verified_perception=self._settings.enable_verified_perception,
         )
 
     def _is_gemini_available(self) -> bool:
@@ -1296,6 +1387,11 @@ class RootCoordinator:
                         elif msg_type == "focus_mode":
                             enabled = bool(payload.get("enabled"))
                             self._settings.focus_mode = enabled
+                        elif msg_type == "manual_analyze":
+                            # Trigger manual analysis
+                            self._manual_analyze_requested = True
+                            await websocket.send(json.dumps({"type": "analyze_triggered"}))
+                            print("[ScreenSense] Manual analyze triggered via IPC")
                         elif msg_type == "app_shutdown":
                             self.request_shutdown()
                             return

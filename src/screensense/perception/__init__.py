@@ -1,6 +1,42 @@
-from __future__ import annotations
+"""Verified Perception Layer
 
-from screensense.perception.ui_context import UiAutomationContext, UiContextResult
-from screensense.perception.semantic_change import SemanticChange, score_semantic_change
+Two-system cross-verification architecture:
+- OmniParser: Vision-based UI element detection
+- Windows UIA: Ground truth from accessibility tree
+- Cross-modal comparison: Only facts both agree on proceed to reasoning
+"""
 
-__all__ = ["UiAutomationContext", "UiContextResult", "SemanticChange", "score_semantic_change"]
+from .context_assembler import ContextAssembler, RichContext
+from .cross_modal_comparator import (
+    ConfidenceLevel,
+    CrossModalComparator,
+    VerifiedElement,
+)
+from .omniparser_client import BoundingBox, DetectedElement, OmniParserClient
+from .passive_signals import PassiveContextCollector, PassiveSignals, WindowMetadata
+from .semantic_dedup import SemanticDeduplicator
+from .windows_uia import Rectangle, UIAElement, WindowsUIAAdapter
+
+__all__ = [
+    # OmniParser
+    "OmniParserClient",
+    "DetectedElement",
+    "BoundingBox",
+    # Windows UIA
+    "WindowsUIAAdapter",
+    "UIAElement",
+    "Rectangle",
+    # Cross-modal comparison
+    "CrossModalComparator",
+    "VerifiedElement",
+    "ConfidenceLevel",
+    # Context assembly
+    "ContextAssembler",
+    "RichContext",
+    # Passive signals
+    "PassiveContextCollector",
+    "PassiveSignals",
+    "WindowMetadata",
+    # Semantic dedup
+    "SemanticDeduplicator",
+]
