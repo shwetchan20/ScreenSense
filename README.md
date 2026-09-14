@@ -457,6 +457,3 @@ The project combines several areas I am interested in:
 
 ---
 
-## License
-
-See `LICENSE` for licensing information.
