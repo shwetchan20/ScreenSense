@@ -1,311 +1,462 @@
 # ScreenSense
 
-ScreenSense is a proactive desktop AI co-pilot for Windows. It monitors your screen, analyzes meaningful visual changes with Gemini Vision, and interrupts only when confidence is high and you are idle.
+> A local-first proactive AI copilot for Windows that understands what is happening on your screen and decides when assistance is actually useful.
 
-## Features in this MVP
+ScreenSense is an experimental desktop AI system built around **perception, reasoning, memory, and controlled action**.
 
-- 3-second screen capture loop (`mss`)
-- Frame differencing with configurable threshold (`numpy`)
-- Gemini Vision structured JSON analysis
-- Confidence + typing-idle + cooldown + dedupe gating before notifications
-- Semantic dedupe for paraphrased repeat interruptions
-- Root coordinator with pluggable sub-agents (`code`, `translate`, `browse`, `general`)
-- Human-in-the-loop action execution (prompted confirmation)
-- Rolling context memory (Firestore-ready abstraction)
-- JSONL audit logs for interrupt/action tuning (`runtime/audit.log.jsonl`)
-- Gemini rate guard (`min interval` + `max calls/min`) for free-tier stability
-- Vision circuit breaker to pause Gemini calls after repeated errors
-- Focus mode and active-window title blocklist (skip Gemini in games/full-focus apps)
-- Action safety policy with preview, confirmation, allowlist, and verification hook
-- ADK-first agent runner bridge with local fallback
-- Optional strict ADK runtime mode (`AGENT_RUNTIME_STRICT=true`) for fail-fast compliance
-- Voice style tuning (`neutral/friendly/humorous`) and optional voice yes/no confirmation
-- Voice provider selection (`VOICE_PROVIDER=auto|coqui_xtts|edge_tts|piper|pyttsx3`) with adaptive phrasing and repeat suppression
-- Edge TTS prosody controls (`VOICE_EDGE_NAME`, `VOICE_EDGE_RATE`, `VOICE_EDGE_PITCH`) for more natural tone
-- Pro voice providers: `coqui_xtts` and `piper` (with fallback chain)
-- Away-mode remote action approval via Telegram (optional)
-- Away-mode remote alert push (Telegram) for important interventions
-- Local fast-path gate to suppress low-signal Gemini calls while user is actively working
-- Optional OCR context layer to enrich Gemini with visible on-screen text
-- Impact-based interrupt scoring (impact + confidence + urgency) before speaking
-- Hybrid reasoning mode: local Qwen primary + Gemini escalation
-- Action Runner v2 with typed multi-step execution and per-step audit logs
-- Planner v2 task graph records (`plan_id`, step criteria, plan lifecycle events)
+Instead of waiting for a user to send a prompt, ScreenSense continuously monitors meaningful changes in the active desktop context, evaluates whether the change requires attention, and can offer assistance when confidence and relevance are high.
 
-## Quick Start
+The project is designed around one principle:
 
-1. Create a virtual environment and install dependencies:
+**An AI assistant should know when *not* to interrupt.**
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e .[dev]
+---
+
+## Why ScreenSense?
+
+Most desktop AI assistants follow:
+
+```text
+User → Prompt → AI → Response
 ```
 
-2. Configure environment:
+ScreenSense explores a different interaction model:
 
-```powershell
-Copy-Item .env.example .env
-# For local-only mode, GEMINI_API_KEY can stay empty.
-# Add GEMINI_API_KEY only if you want Gemini or hybrid escalation.
+```text
+Desktop
+   ↓
+Perception
+   ↓
+Change Detection
+   ↓
+Context / Vision Analysis
+   ↓
+Confidence + Impact Gating
+   ↓
+Should I Interrupt?
+   ↓
+User Confirmation
+   ↓
+Action / Response
+   ↓
+Memory + Audit Log
 ```
 
-3. Run:
+The difficult part is not calling an LLM.
 
-```powershell
-python -m screensense.app
+The difficult part is deciding **when an observation is meaningful enough to justify an interruption or action**.
+
+---
+
+## Core Capabilities
+
+### Perception
+
+* Periodic screen capture using `mss`
+* Configurable frame-difference detection
+* Active-window awareness
+* Optional OCR context
+* Focus-mode and application blocklists
+
+### AI Reasoning
+
+* Vision-based screen understanding
+* Local LLM inference through Ollama
+* Optional Gemini escalation
+* Hybrid local-first reasoning
+* Structured reasoning outputs
+* Confidence-based decision making
+
+### Proactive Assistance
+
+* Idle/typing detection
+* Confidence gating
+* Impact-based interruption scoring
+* Cooldowns
+* Semantic deduplication
+* Stale-decision protection
+
+### Agent System
+
+ScreenSense uses a coordinator with specialized agent capabilities:
+
+```text
+                    ┌───────────────┐
+                    │   ScreenSense │
+                    │   Coordinator │
+                    └───────┬───────┘
+                            │
+          ┌─────────────────┼─────────────────┐
+          ↓                 ↓                 ↓
+       Code Agent      Browse Agent     General Agent
+                            │
+                       Translate Agent
 ```
 
-4. Optional: run backend locally and use HTTP inference mode:
+The agent runtime is designed to support controlled multi-step actions rather than unrestricted autonomous execution.
 
-```powershell
-pip install -e .[cloud]
-$env:GEMINI_API_KEY="YOUR_KEY"
-.\scripts\run_backend_local.ps1
+---
+
+## Safety Architecture
+
+ScreenSense is intentionally **human-in-the-loop**.
+
+Actions can pass through:
+
+```text
+Observation
+    ↓
+Reasoning
+    ↓
+Action Proposal
+    ↓
+Preview
+    ↓
+User Confirmation
+    ↓
+Allowlist / Safety Policy
+    ↓
+Execution
+    ↓
+Verification
+    ↓
+Audit Log
 ```
 
-Set these in `.env` for desktop app:
+The system also supports:
 
-```env
-INFERENCE_MODE=http
-INFERENCE_BACKEND_URL=http://127.0.0.1:8080
-INFERENCE_BACKEND_AUTH_TOKEN=
+* Action allowlists
+* Confirmation before execution
+* Per-step action auditing
+* Verification hooks
+* Cooldowns
+* Circuit breakers
+* Remote approval through Telegram
+* Observe-only operation
+
+The default philosophy is:
+
+> **Observe first. Ask before acting. Verify after acting.**
+
+---
+
+## Hybrid Local + Cloud Reasoning
+
+ScreenSense can operate entirely with a local model or use a hybrid architecture.
+
+### Local
+
+```text
+Screen → Local Vision/LLM → Decision
 ```
 
-## Notes
+### Hybrid
 
-- This scaffold is designed for production-oriented iteration and safe extension.
-- Voice input/VAD and UI tray/dashboard are intentionally stubbed behind interfaces.
-- Recommended default mode is `PRODUCT_MODE=observe` with `ASK_BEFORE_ACT=true`.
-- Backend deploy assets included: `Dockerfile.backend`, `cloudrun.backend.yaml`.
-- Persistence sink modes available for audit/memory: `local`, `firestore`, `dual` (with local fallback).
-- Action execution now records step-level results and verification reasons in audit logs.
-- Planning records are emitted as `plan_created` and attached to action events via `plan_id`.
+```text
+Screen
+   ↓
+Local Qwen
+   ↓
+Confidence sufficient?
+   ├── Yes → Decision
+   └── No  → Gemini escalation
+                  ↓
+               Decision
+```
 
-## Hybrid Reasoning (Qwen + Gemini)
+This allows inexpensive local inference for routine situations while reserving cloud reasoning for cases that require stronger analysis.
 
-Use local-first reasoning with Gemini fallback only when local output is weak/complex:
+Example configuration:
 
 ```env
 REASONING_MODE=hybrid
 LOCAL_LLM_PROVIDER=ollama
 LOCAL_LLM_MODEL=qwen2.5:latest
 LOCAL_LLM_BASE_URL=http://127.0.0.1:11434
-LOCAL_LLM_TIMEOUT_SECONDS=25
 LOCAL_LLM_USE_VISION=true
-LOCAL_LLM_ESCALATE_CONFIDENCE_THRESHOLD=0.72
-HYBRID_FORCE_GEMINI_ON_CRITICAL=true
 ```
 
-For stronger local grounding, use a vision-capable Ollama model (example: `qwen2.5vl:7b`).
+Supported modes:
 
-Modes:
+* `local` — local model only
+* `hybrid` — local model with cloud escalation
+* `gemini` — Gemini-based reasoning
 
-- `REASONING_MODE=local` -> local LLM only
-- `REASONING_MODE=hybrid` -> local first, Gemini escalation
-- `REASONING_MODE=gemini` -> Gemini only
+---
 
-If `GEMINI_API_KEY` is empty, ScreenSense now auto-falls back to local Qwen in `hybrid`/`gemini` modes.
+## Memory
 
-Persona tuning:
+ScreenSense maintains rolling context and can persist runtime information through configurable storage backends.
 
-```env
-ASSISTANT_NAME=ARIA
-ASSISTANT_PERSONA=calm concise proactive with dry wit
-USER_NAME=Shwet
+Current persistence abstractions support:
+
+* Local storage
+* Firestore
+* Dual local + Firestore mode
+
+The system can also adapt interruption behaviour based on user interaction and application context.
+
+---
+
+## Voice
+
+ScreenSense includes an optional voice layer with multiple providers:
+
+* Edge TTS
+* Piper
+* Coqui XTTS
+* pyttsx3
+
+Voice behaviour can be configured for different interruption styles and personas.
+
+Voice functionality is treated as an interface around the core agent system rather than being coupled to the reasoning pipeline.
+
+---
+
+## Observability
+
+Every important action can produce structured audit information.
+
+Example:
+
+```text
+Observation
+    ↓
+Decision
+    ↓
+Interruption
+    ↓
+Action
+    ↓
+Verification
 ```
 
-Adaptive persona memory:
+These events can be recorded as JSONL logs for debugging, evaluation, and future policy tuning.
 
-```env
-PERSONA_LEARNING_ENABLED=true
-PERSONA_PROFILE_PATH=runtime/persona_profile.json
+This is important because proactive systems need to answer:
+
+**Why did the assistant interrupt me?**
+
+---
+
+## Project Structure
+
+```text
+ScreenSense/
+├── src/
+│   └── screensense/
+│       ├── perception/
+│       ├── agents/
+│       ├── reasoning/
+│       ├── actions/
+│       ├── memory/
+│       └── ...
+│
+├── tests/
+├── docs/
+├── scripts/
+├── .env.example
+├── pyproject.toml
+└── README.md
 ```
 
-ScreenSense updates persona preferences over time from action accepts/denials.
+The implementation is still evolving, so module boundaries may change as the architecture is refined.
 
-Per-app interruption adaptation:
+---
 
-```env
-APP_ADAPTATION_ENABLED=true
-APP_PROFILE_PATH=runtime/app_preferences.json
-```
+## Quick Start
 
-ScreenSense learns stricter/looser interrupt thresholds per app from your accepts/denials.
+### Requirements
 
-## Voice Providers
+* Windows
+* Python 3.11+
+* Ollama — optional for local reasoning
+* Gemini API key — optional for cloud/hybrid reasoning
 
-`VOICE_PROVIDER` supports:
-
-- `auto` (tries `coqui_xtts`, then `edge_tts`, then `piper`, then `pyttsx3`)
-- `coqui_xtts`
-- `edge_tts`
-- `piper`
-- `pyttsx3`
-
-Voice interrupt aggressiveness:
-
-```env
-VOICE_AGGRESSIVENESS=balanced
-```
-
-Options:
-
-- `quiet` (fewer interruptions)
-- `balanced` (default)
-- `chatty` (more frequent voice interventions)
-
-Voice preset (for consistent Astra-like delivery):
-
-```env
-VOICE_PRESET=astra_like
-```
-
-Apply preset quickly:
+### Installation
 
 ```powershell
-.\scripts\apply_astra_voice_profile.ps1
+git clone https://github.com/shwetchan20/ScreenSense.git
+cd ScreenSense
+
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+pip install -e ".[dev]"
 ```
 
-Voice smoke test:
+Create the environment file:
 
 ```powershell
-python scripts/voice_smoke_test.py
+Copy-Item .env.example .env
 ```
 
-Pro voice install:
+For local-only operation, a Gemini API key is not required.
+
+Run:
 
 ```powershell
-pip install -e .[voice,voice_pro]
+python -m screensense.app
 ```
 
-Optional Coqui and Piper settings:
+---
+
+## Local LLM Setup
+
+For local-first reasoning, install and run Ollama and configure:
 
 ```env
-VOICE_COQUI_MODEL=tts_models/multilingual/multi-dataset/xtts_v2
-VOICE_COQUI_SPEAKER_WAV=
-VOICE_COQUI_LANGUAGE=en
-VOICE_COQUI_DEVICE=auto
-VOICE_PIPER_BIN=
-VOICE_PIPER_MODEL_PATH=
-VOICE_PIPER_SPEAKER_ID=0
-VOICE_PIPER_LENGTH_SCALE=1.0
+REASONING_MODE=local
+LOCAL_LLM_PROVIDER=ollama
+LOCAL_LLM_MODEL=qwen2.5:latest
+LOCAL_LLM_BASE_URL=http://127.0.0.1:11434
 ```
 
-## Remote Approval (Optional)
+For a vision-capable model, use an appropriate vision model supported by your local hardware.
 
-When user is away, ScreenSense can request action approval on Telegram before executing.
+---
 
-Set in `.env`:
+## Optional Components
 
-```env
-ENABLE_REMOTE_APPROVAL=true
-REMOTE_APPROVAL_PROVIDER=telegram
-REMOTE_APPROVAL_TIMEOUT_SECONDS=90
-REMOTE_APPROVAL_POLL_SECONDS=2
-TELEGRAM_BOT_TOKEN=123456:ABCDEF...
-TELEGRAM_CHAT_ID=123456789
-```
+ScreenSense contains optional integrations for:
 
-Reply format in Telegram:
+| Component     | Purpose                         |
+| ------------- | ------------------------------- |
+| Ollama        | Local LLM/VLM inference         |
+| Gemini        | Cloud reasoning / escalation    |
+| OCR           | Additional visible-text context |
+| Telegram      | Remote action approval          |
+| Firestore     | Persistent memory/audit storage |
+| TTS providers | Voice interaction               |
+| Cloud Run     | Optional backend deployment     |
 
-- `YES <ID>` to approve
-- `NO <ID>` to deny
+These components are not required for the core perception and reasoning architecture.
 
-Optional alert push while away:
+---
 
-```env
-ENABLE_REMOTE_ALERTS=true
-REMOTE_ALERT_MIN_PRIORITY=critical
-REMOTE_ALERT_COOLDOWN_SECONDS=300
-```
+## Current Status
 
-## OCR Context (Optional)
+**Experimental / active development**
 
-OCR enriches app context with a short `ui_text_excerpt` before Gemini reasoning.
+The core architecture is functional, but ScreenSense is **not presented as a finished production application**.
 
-```env
-ENABLE_OCR_CONTEXT=true
-OCR_PROVIDER=auto
-OCR_MIN_INTERVAL_SECONDS=10
-OCR_MAX_TEXT_CHARS=280
-```
+Some components are experimental, incomplete, or still being redesigned.
 
-Install OCR package:
+Current development priorities:
 
-```powershell
-pip install -e .[ocr]
-```
+* Improve perception reliability
+* Reduce unnecessary interruptions
+* Improve local VLM performance
+* Strengthen action verification
+* Improve memory quality
+* Simplify the runtime architecture
+* Expand automated evaluation
+* Improve Windows UX
 
-If `pytesseract` or native Tesseract binary is unavailable, ScreenSense falls back gracefully.
+---
 
-## Impact Scoring
+## Roadmap
 
-Interrupts are gated by an impact score before cooldown/dedupe policy.
+### Perception
 
-```env
-ENABLE_IMPACT_SCORING=true
-IMPACT_SCORE_THRESHOLD=0.62
-```
+* [x] Screen capture
+* [x] Frame-change detection
+* [x] Active-window awareness
+* [x] Optional OCR
+* [ ] Stronger semantic scene understanding
+* [ ] Better temporal reasoning
 
-Freshness guard (prevents late/stale async decisions from interrupting):
+### Reasoning
 
-```env
-STALE_DECISION_MAX_AGE_SECONDS=8
-STALE_DECISION_REQUIRE_SAME_APP=true
-```
+* [x] Vision reasoning
+* [x] Local LLM support
+* [x] Hybrid reasoning
+* [x] Confidence gating
+* [ ] Better evaluation benchmarks
+* [ ] Improved hallucination detection
 
-## Deployment Helpers
+### Agents
 
-- Local backend runner: `scripts/run_backend_local.ps1`
-- Cloud Run deploy helper: `scripts/deploy_backend_cloudrun.ps1`
-- Architecture diagram: `docs/ARCHITECTURE.md`
+* [x] Agent coordinator
+* [x] Specialized agent routing
+* [x] Action proposals
+* [x] Human confirmation
+* [x] Action auditing
+* [ ] More robust multi-step execution
 
-## UI Command Center
+### Memory
 
-Run the live dashboard (Ghost/Notify/Dashboard states from runtime events):
+* [x] Rolling context
+* [x] Persistence abstraction
+* [x] User preference adaptation
+* [ ] Long-term memory evaluation
 
-```powershell
-.\scripts\run_ui.ps1
-```
+### Safety
 
-Open `http://127.0.0.1:8090`.
+* [x] Confirmation gates
+* [x] Action allowlists
+* [x] Cooldowns
+* [x] Circuit breakers
+* [x] Audit logging
+* [ ] Formal policy evaluation
 
-## Operational By Tomorrow (Local)
+---
 
-Use this path for a reliable always-on local runtime.
+## Design Principles
 
-1. Apply reliable local profile:
+ScreenSense is being developed around a few constraints:
 
-```powershell
-.\scripts\apply_local_reliable_profile.ps1
-```
+1. **Local-first where practical**
+2. **Minimize unnecessary cloud inference**
+3. **Do not interrupt without sufficient evidence**
+4. **Never silently execute high-impact actions**
+5. **Keep perception, reasoning, and execution separable**
+6. **Record enough information to explain system decisions**
+7. **Treat autonomy as a controlled capability, not a default**
 
-2. Run readiness check:
+---
 
-```powershell
-.\scripts\run_agent.ps1 -CheckOnly
-```
+## Limitations
 
-3. Start agent foreground:
+ScreenSense is an experimental research/engineering project.
 
-```powershell
-.\scripts\run_agent.ps1
-```
+It currently has limitations around:
 
-4. Start background process:
+* Vision-model latency
+* False-positive and false-negative perception
+* Windows-specific behaviour
+* Local model resource requirements
+* Agent reliability
+* Long-term memory quality
+* Voice and UI integrations
+* Autonomous action robustness
 
-```powershell
-.\scripts\start_agent_background.ps1
-```
+These are active engineering problems rather than claims of production readiness.
 
-5. Enable auto-start at login:
+---
 
-```powershell
-.\scripts\setup_autostart_task.ps1
-```
+## Why This Project Exists
 
-Logs:
+ScreenSense is an exploration of what happens when an AI assistant moves from:
 
-- Runtime audit: `runtime/audit.log.jsonl`
-- Background stdout/stderr: `runtime/agent.out.log`
+> **"Ask me anything."**
+
+to:
+
+> **"I understand enough of your current context to know when I might be useful."**
+
+The project combines several areas I am interested in:
+
+* Multimodal AI
+* Vision-language models
+* Agentic systems
+* Local LLM inference
+* Context and memory
+* Human-AI interaction
+* AI safety and action verification
+
+---
+
+## License
+
+See `LICENSE` for licensing information.
