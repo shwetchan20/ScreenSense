@@ -1,0 +1,15 @@
+run_id,task_id,condition,backend,model,independent_oracle,agent_reported_status,failure_labels,latency_ms,peak_vram_mb,cloud_fallback,notes
+RUN-FEAS-01,SMOKE-OLLAMA,N/A,ollama,qwen3-vl:2b,FAIL,CRASH,J_TIMEOUT_RESOURCE_EXHAUSTION,180000,,FALSE,Ollama not installed or listening on 11434
+RUN-FEAS-02,SMOKE-LLAMACPP-LOAD,N/A,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,3990,4571,FALSE,Loaded in WSL with CUDA ngl 99 successfully
+RUN-FEAS-03,SMOKE-LLAMACPP-INFER,N/A,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,1148,4571,FALSE,Local JSON chat completion verified
+RUN-FEAS-04,ARIA-OBSERVE-START,A_NO_VERIFICATION,ollama,qwen3-vl:2b,FAIL,CRASH,J_TIMEOUT_RESOURCE_EXHAUSTION;A_PERCEPTION_FAILURE,180000,,FALSE,Hangs connecting to 11434
+RUN-DIAG-01,TASK-01,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,NOT RUN,NOT RUN,BLOCKED_BACKEND_MISMATCH,,,,Blocked: ARIA pipeline hardcodes Ollama VLM API
+RUN-DIAG-02,TASK-02,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,NOT RUN,NOT RUN,BLOCKED_BACKEND_MISMATCH,,,,Blocked: ARIA pipeline hardcodes Ollama VLM API
+RUN-DIAG-03,TASK-03,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,NOT RUN,NOT RUN,BLOCKED_BACKEND_MISMATCH,,,,Blocked: ARIA pipeline hardcodes Ollama VLM API
+RUN-DIAG-04,TASK-04,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,NOT RUN,NOT RUN,BLOCKED_BACKEND_MISMATCH,,,,Blocked: ARIA pipeline hardcodes Ollama VLM API
+RUN-DIAG-05,TASK-05,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,NOT RUN,NOT RUN,BLOCKED_BACKEND_MISMATCH,,,,Blocked: ARIA pipeline hardcodes Ollama VLM API
+RUN-INT-01,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,1789,,FALSE,backend_health_json: JSON round-trip confirmed
+RUN-INT-02,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,1789,,FALSE,classifier_screen_task: type=screen_task
+RUN-INT-03,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,1213,,FALSE,classifier_conversation: type=memory_query
+RUN-INT-04,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,5594,,FALSE,planner_file_task: 2 steps returned
+RUN-INT-05,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,2356,,FALSE,planner_ambiguous_task: steps returned
