@@ -1,0 +1,10 @@
+mss
+pynput
+httpx
+pyautogui
+psutil
+pywin32
+Pillow
+uiautomation
+python-telegram-bot
+edge-tts

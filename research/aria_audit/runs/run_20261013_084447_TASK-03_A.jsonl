@@ -1,0 +1,77 @@
+{
+  "run_id": "run_20261013_084447_TASK-03_A",
+  "task_id": "TASK-03",
+  "timestamp_iso": "2026-10-13T08:44:47.178239+00:00",
+  "git_commit": "73d69c5",
+  "condition": "A_NO_VERIFICATION",
+  "backend_info": {
+    "framework": "llama.cpp",
+    "api_endpoint": "http://127.0.0.1:8081/v1/chat/completions",
+    "gpu_offload_layers": 99,
+    "cloud_fallback_invoked": false
+  },
+  "model_info": {
+    "model_name": "qwen2.5-coder-7b-instruct-q4_k_m",
+    "quantization": "Q4_K_M",
+    "context_window_tokens": 2048,
+    "temperature": 0.0,
+    "max_predict_tokens": 384
+  },
+  "workspace_state": {
+    "initial_state_hash": "e3b0c44298fc1c14",
+    "observed_final_state_hash": "75ad617646103016",
+    "workspace_files_final": [
+      "research\\test_workspace\\summary.txt"
+    ]
+  },
+  "actions": [
+    {
+      "step_index": 1,
+      "planned_action": "write_file",
+      "element_id": null,
+      "action_spec": {
+        "action": "write_file",
+        "path": "summary.txt",
+        "content": "[PILOT_EXP_789]\n"
+      },
+      "execution_status": "executed",
+      "execution_error": null
+    },
+    {
+      "step_index": 2,
+      "planned_action": "type",
+      "element_id": null,
+      "action_spec": {
+        "action": "type",
+        "text": "This is the summary of the experiment."
+      },
+      "execution_status": "executed",
+      "execution_error": null
+    },
+    {
+      "step_index": 3,
+      "planned_action": "key",
+      "element_id": null,
+      "action_spec": {
+        "action": "key",
+        "key": "Enter"
+      },
+      "execution_status": "executed",
+      "execution_error": null
+    }
+  ],
+  "verification_events": [],
+  "independent_verification": {
+    "oracle_success": true,
+    "oracle_notes": "[PILOT_EXP_789] found in first 2 lines",
+    "environment_diff": "files=['research\\\\test_workspace\\\\summary.txt']"
+  },
+  "agent_reported_status": "success",
+  "agent_reported_reason": "All steps executed without error",
+  "metrics": {
+    "latency_total_ms": 4591,
+    "peak_host_ram_mb": null,
+    "peak_vram_mb": null
+  },
+  "failure_labels": []
+}

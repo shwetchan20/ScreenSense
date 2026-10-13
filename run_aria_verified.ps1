@@ -1,54 +1,61 @@
 #!/usr/bin/env pwsh
-# Run ARIA with Verified Perception
+# Run ARIA Local Runtime (Master Architecture)
 
-Write-Host "=== Starting ARIA with Verified Perception ===" -ForegroundColor Cyan
+Write-Host "=== Starting ARIA (Local Vision Runtime) ===" -ForegroundColor Cyan
 Write-Host ""
 
-# Check if Ollama is running
+Write-Host "Configuring GPU-first runtime..." -ForegroundColor Yellow
+$env:OLLAMA_LLM_LIBRARY = "cuda"
+$env:OLLAMA_FLASH_ATTENTION = "1"
+$env:CUDA_VISIBLE_DEVICES = "0"
+$env:ARIA_DISABLE_TELEGRAM = "1"
+$env:ARIA_TELEGRAM_TOKEN = ""
+$env:ARIA_TELEGRAM_CHAT_ID = ""
+$env:TELEGRAM_BOT_TOKEN = ""
+$env:TELEGRAM_CHAT_ID = ""
+$env:ARIA_VLM_MODEL = "qwen3-vl:2b"
+$env:ARIA_VLM_NUM_CTX = "1024"
+$env:ARIA_SCREENSHOT_MAX_WIDTH = "640"
+$env:ARIA_SCREENSHOT_MAX_HEIGHT = "360"
+$env:ARIA_SCREEN_VLM_NUM_PREDICT = "384"
+$env:ARIA_SCREEN_VLM_TIMEOUT_SECONDS = "180"
+$modelName = $env:ARIA_VLM_MODEL
+
 Write-Host "Checking Ollama status..." -ForegroundColor Yellow
-try {
-    $response = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -Method GET -TimeoutSec 2 -ErrorAction Stop
-    Write-Host "✓ Ollama is running" -ForegroundColor Green
-} catch {
-    Write-Host "✗ Ollama is not running!" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Please start Ollama first:" -ForegroundColor Yellow
-    Write-Host "  ollama run llama3.2:3b" -ForegroundColor White
-    Write-Host ""
-    exit 1
+$response = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -Method GET -TimeoutSec 2
+Write-Host "Ollama is running" -ForegroundColor Green
+
+Write-Host "Checking $modelName model..." -ForegroundColor Yellow
+$models = $response.Content | ConvertFrom-Json
+$hasModel = $models.models | Where-Object { $_.name -like "$modelName*" }
+if (-not $hasModel) {
+    throw "$modelName not found. Run: ollama pull $modelName"
 }
+Write-Host "$modelName is available" -ForegroundColor Green
+Write-Host ""
 
-# Check if llama3.2:3b is available
-Write-Host "Checking llama3.2:3b model..." -ForegroundColor Yellow
-$models = (Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -Method GET).Content | ConvertFrom-Json
-$hasLlama = $models.models | Where-Object { $_.name -like "llama3.2:3b*" }
-
-if (-not $hasLlama) {
-    Write-Host "✗ llama3.2:3b not found!" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Please pull the model first:" -ForegroundColor Yellow
-    Write-Host "  ollama pull llama3.2:3b" -ForegroundColor White
-    Write-Host ""
-    exit 1
+Write-Host "Warming model and verifying GPU..." -ForegroundColor Yellow
+$warmPayload = @{
+    model = $modelName
+    prompt = "{`"ok`":true}"
+    stream = $false
+    format = "json"
+    options = @{
+        num_predict = 16
+        num_ctx = 1024
+        temperature = 0
+    }
+} | ConvertTo-Json -Depth 5
+Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/generate" -Method POST -Body $warmPayload -ContentType "application/json" -TimeoutSec 180 | Out-Null
+$psOut = ollama ps
+if ($psOut -match "100% CPU") {
+    throw "Ollama is still on CPU. Aborting launch to avoid slow runtime."
 }
-
-Write-Host "✓ llama3.2:3b is available" -ForegroundColor Green
+Write-Host "GPU mode detected." -ForegroundColor Green
 Write-Host ""
 
-# Check verified perception settings
-Write-Host "Verified Perception Configuration:" -ForegroundColor Cyan
-Write-Host "  - OmniParser: YOLOv8n (CPU)" -ForegroundColor White
-Write-Host "  - Windows UIA: Enabled (500ms cache)" -ForegroundColor White
-Write-Host "  - Cross-Modal Verification: Enabled" -ForegroundColor White
-Write-Host "  - Passive Signals: Clipboard + Browser URL" -ForegroundColor White
-Write-Host "  - Semantic Dedup: Enabled (0.85 threshold)" -ForegroundColor White
-Write-Host "  - Response Limit: 12 words" -ForegroundColor White
-Write-Host ""
-
-# Start ARIA
-Write-Host "Starting ARIA..." -ForegroundColor Green
-Write-Host ""
+Write-Host "Starting ARIA runtime..." -ForegroundColor Green
 Write-Host "Press Ctrl+C to stop" -ForegroundColor Yellow
 Write-Host ""
 
-python -m screensense.app
+python -m aria.main

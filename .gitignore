@@ -3,3 +3,9 @@ __pycache__/
 .env
 .pytest_cache/
 runtime/
+.tmp/
+aria_memory.db
+desktop.ini
+*.zip
+research/test_workspace/*
+!research/test_workspace/.gitkeep

@@ -1,0 +1,100 @@
+{
+  "audit_timestamp_iso": "2026-10-13T00:46:00+05:30",
+  "repository": {
+    "name": "screensense / ARIA",
+    "local_path": "c:\\Users\\shwet k\\OneDrive\\Desktop\\screensense",
+    "git_branch": "main",
+    "git_commit": "5d97ca41532fb578f03d2547f472ec7c636dc3ad",
+    "working_tree_status": "dirty (uncommitted restructuring: src/screensense deleted, src/aria introduced)"
+  },
+  "host_hardware": {
+    "os_caption": "Microsoft Windows 11 Home Single Language",
+    "os_version": "10.0.26300",
+    "cpu_model": "13th Gen Intel(R) Core(TM) i5-13420H",
+    "cpu_physical_cores": 8,
+    "cpu_logical_processors": 12,
+    "ram_total_kb": 16397508,
+    "ram_total_gb": 15.64,
+    "ram_free_kb": 893172,
+    "ram_free_gb": 0.85,
+    "memory_pressure_warning": true,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+        "driver_version": "592.82",
+        "cuda_version": "13.1",
+        "vram_total_mb": 6141,
+        "vram_baseline_used_mb": 111,
+        "vram_peak_with_llama_mb": 4571
+      },
+      {
+        "name": "Intel(R) UHD Graphics",
+        "driver_version": "32.0.101.7088",
+        "adapter_ram_bytes": 2147479552
+      }
+    ]
+  },
+  "python_runtime": {
+    "system_python": "Python 3.13.7",
+    "venv_python": "c:\\Users\\shwet k\\OneDrive\\Desktop\\screensense\\.venv\\Scripts\\python.exe (Python 3.13.7)",
+    "key_packages_installed": {
+      "httpx": "0.28.1",
+      "mss": "10.1.0",
+      "pillow": "12.1.1",
+      "psutil": "7.2.2",
+      "pyautogui": "0.9.54",
+      "pynput": "1.8.1",
+      "pywin32": "311",
+      "uiautomation": "2.0.29",
+      "python-telegram-bot": "22.6",
+      "edge-tts": "7.2.7",
+      "playsound": "1.2.2",
+      "ollama": "0.6.1 (Python SDK)"
+    }
+  },
+  "local_inference_backend": {
+    "framework": "llama.cpp",
+    "execution_subsystem": "WSL 2 (Ubuntu)",
+    "binary_path": "/home/shwet/llm/build/bin/llama-server",
+    "cli_path": "/home/shwet/llm/build/bin/llama-cli",
+    "version": "0.5.0-dev (build 11153, commit 9710a3217)",
+    "compiler": "GNU 13.3.0 for Linux x86_64",
+    "cuda_acceleration": true,
+    "cuda_library": "/home/shwet/llm/build/bin/libggml-cuda.so.0.25.1",
+    "windows_port_mapping": "127.0.0.1:8081",
+    "tested_startup_args": [
+      "-m", "/home/shwet/llm/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+      "--port", "8081",
+      "-ngl", "99",
+      "-c", "2048",
+      "--host", "0.0.0.0"
+    ],
+    "measured_performance": {
+      "model_load_time_seconds": 3.99,
+      "prompt_eval_tokens_per_sec": 157.8,
+      "generation_tokens_per_sec": 24.0,
+      "json_chat_completion_latency_ms": 1148.24,
+      "vram_allocation_mb": 4460,
+      "cloud_api_fallback_invoked": false
+    }
+  },
+  "model_details": {
+    "gguf_file": "/home/shwet/llm/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+    "file_size_bytes": 4683073536,
+    "file_size_gb": 4.68,
+    "model_family": "Qwen2.5-Coder",
+    "parameter_count": "7B",
+    "quantization": "Q4_K_M",
+    "modality": "text-only",
+    "context_length_configured": 2048
+  },
+  "backend_discrepancy_and_blockers": {
+    "ollama_installed_on_host": false,
+    "ollama_listening_on_11434": false,
+    "aria_configured_backend": "Ollama HTTP API hardcoded at http://localhost:11434/api/generate",
+    "aria_configured_model": "qwen3-vl:2b (Vision-Language Model)",
+    "actual_available_backend": "llama.cpp HTTP server (OpenAI / llama-server API) on port 8081",
+    "actual_available_model": "qwen2.5-coder-7b-instruct-q4_k_m.gguf (Text-only Code LLM)",
+    "primary_blocker": "Protocol mismatch (Ollama /api/generate vs llama-server /v1/chat/completions) and modality mismatch (ARIA pipeline requires vision embeddings for screenshots, but local GGUF model is text-only)."
+  }
+}

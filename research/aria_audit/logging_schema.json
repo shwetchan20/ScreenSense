@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AriaResearchRunLog",
+  "description": "Structured logging schema for ARIA desktop agent research runs and benchmark evaluation.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "task_id",
+    "timestamp_iso",
+    "git_commit",
+    "condition",
+    "backend_info",
+    "model_info",
+    "actions",
+    "independent_verification",
+    "agent_reported_status",
+    "metrics",
+    "failure_labels"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Unique UUID or run identifier (e.g., run_20261013_task01_001)"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Stable task identifier matching task_manifest.json (e.g., TASK-01)"
+    },
+    "timestamp_iso": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "git_commit": {
+      "type": "string",
+      "description": "HEAD commit hash when run was conducted"
+    },
+    "condition": {
+      "type": "string",
+      "enum": ["A_NO_VERIFICATION", "B_VERIFIED_REFLECTION"],
+      "description": "Experimental condition tested"
+    },
+    "backend_info": {
+      "type": "object",
+      "properties": {
+        "framework": { "type": "string", "enum": ["llama.cpp", "ollama", "mock"] },
+        "api_endpoint": { "type": "string" },
+        "gpu_offload_layers": { "type": "integer" },
+        "cloud_fallback_invoked": { "type": "boolean" }
+      },
+      "required": ["framework", "cloud_fallback_invoked"]
+    },
+    "model_info": {
+      "type": "object",
+      "properties": {
+        "model_name": { "type": "string" },
+        "quantization": { "type": "string" },
+        "context_window_tokens": { "type": "integer" },
+        "temperature": { "type": "number" },
+        "max_predict_tokens": { "type": "integer" }
+      },
+      "required": ["model_name", "quantization", "context_window_tokens"]
+    },
+    "workspace_state": {
+      "type": "object",
+      "properties": {
+        "initial_state_hash": { "type": "string" },
+        "expected_final_state_hash": { "type": "string" },
+        "observed_final_state_hash": { "type": "string" }
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_index": { "type": "integer" },
+          "active_app": { "type": "string" },
+          "window_title": { "type": "string" },
+          "visible_text_count": { "type": "integer" },
+          "interactable_elements_count": { "type": "integer" },
+          "screenshot_hash": { "type": "string" },
+          "vlm_summary": { "type": "string" }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_index": { "type": "integer" },
+          "planned_action": { "type": "string" },
+          "element_id": { "type": ["integer", "null"] },
+          "action_spec": { "type": "object" },
+          "execution_status": { "type": "string", "enum": ["executed", "failed", "rejected"] },
+          "execution_error": { "type": ["string", "null"] }
+        },
+        "required": ["step_index", "planned_action", "execution_status"]
+      }
+    },
+    "verification_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_index": { "type": "integer" },
+          "verifier_verdict": { "type": "boolean" },
+          "verifier_observation": { "type": "string" },
+          "reflector_decision": { "type": "string", "enum": ["next_step", "replan", "done", "abort"] }
+        }
+      }
+    },
+    "independent_verification": {
+      "type": "object",
+      "properties": {
+        "oracle_success": { "type": "boolean" },
+        "oracle_notes": { "type": "string" },
+        "environment_diff": { "type": "string" }
+      },
+      "required": ["oracle_success"]
+    },
+    "agent_reported_status": {
+      "type": "string",
+      "enum": ["success", "replan", "abort", "crash", "timeout", "not_run"]
+    },
+    "recovery_behavior": {
+      "type": "object",
+      "properties": {
+        "failure_detected_by_agent": { "type": "boolean" },
+        "recovery_attempted": { "type": "boolean" },
+        "recovery_succeeded": { "type": "boolean" },
+        "replan_count": { "type": "integer" }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "latency_total_ms": { "type": "number" },
+        "peak_host_ram_mb": { "type": "number" },
+        "peak_vram_mb": { "type": "number" },
+        "tokens_prompt_eval": { "type": "integer" },
+        "tokens_generated": { "type": "integer" }
+      }
+    },
+    "failure_labels": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "A_PERCEPTION_FAILURE",
+          "B_MISSING_OR_TRUNCATED_CONTEXT",
+          "C_REASONING_PLANNING_FAILURE",
+          "D_INVALID_UNSUPPORTED_ACTION",
+          "E_ACTION_EXECUTION_FAILURE",
+          "F_STATE_TRACKING_FAILURE",
+          "G_VERIFICATION_FAILURE",
+          "H_FALSE_SUCCESS_REPORTING",
+          "I_RECOVERY_FAILURE",
+          "J_TIMEOUT_RESOURCE_EXHAUSTION",
+          "K_CLOUD_FALLBACK_CONTAMINATION",
+          "L_OTHER_UNDETERMINED"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "manifest_version": "1.0.0",
+  "workspace_root": "research/test_workspace",
+  "tasks": [
+    {
+      "task_id": "TASK-01",
+      "name": "Basic deterministic execution",
+      "category": "filesystem_atomic",
+      "description": "Create a specified file 'report.txt' in the disposable test directory containing the exact string 'ARIA_LOCAL_OK'.",
+      "preconditions": [
+        "Disposable workspace directory research/test_workspace exists and is completely empty",
+        "No outside windows or system files are touched"
+      ],
+      "initial_state": {
+        "files_present": []
+      },
+      "expected_final_state": {
+        "files_present": ["research/test_workspace/report.txt"],
+        "exact_content": {
+          "research/test_workspace/report.txt": "ARIA_LOCAL_OK"
+        }
+      },
+      "independent_verification_procedure": "1. Check os.path.exists('research/test_workspace/report.txt'). 2. Assert exact string equality of utf-8 contents with 'ARIA_LOCAL_OK'.",
+      "safety_constraints": [
+        "Do not allow paths outside research/test_workspace",
+        "Must not invoke shell commands with administrative privileges"
+      ],
+      "timeout_seconds": 60,
+      "context_requirements": [
+        "Path to disposable test workspace"
+      ]
+    },
+    {
+      "task_id": "TASK-02",
+      "name": "Multi-step hierarchical execution",
+      "category": "filesystem_multistep",
+      "description": "Create a directory 'nested_output' inside the test workspace, then create a file 'data.json' inside it with content '{\"verified\": true}'.",
+      "preconditions": [
+        "Disposable workspace directory research/test_workspace exists and is completely empty"
+      ],
+      "initial_state": {
+        "files_present": []
+      },
+      "expected_final_state": {
+        "directories_present": ["research/test_workspace/nested_output"],
+        "files_present": ["research/test_workspace/nested_output/data.json"],
+        "exact_content": {
+          "research/test_workspace/nested_output/data.json": "{\"verified\": true}"
+        }
+      },
+      "independent_verification_procedure": "1. Check os.path.isdir('research/test_workspace/nested_output'). 2. Check os.path.isfile('research/test_workspace/nested_output/data.json'). 3. Parse JSON content and verify verified == True.",
+      "safety_constraints": [
+        "Sandbox strictly to research/test_workspace",
+        "Reject directory traversal (e.g., ../)"
+      ],
+      "timeout_seconds": 90,
+      "context_requirements": [
+        "Workspace path",
+        "Step order: Directory creation prior to file creation"
+      ]
+    },
+    {
+      "task_id": "TASK-03",
+      "name": "Context retention across execution steps",
+      "category": "context_retention",
+      "description": "Given an instruction: 'Write an experiment summary to summary.txt. As an experimental requirement, tag the file header with [PILOT_EXP_789]', verify that the header requirement is preserved across intermediate planning and execution steps.",
+      "preconditions": [
+        "Disposable workspace directory research/test_workspace is empty"
+      ],
+      "initial_state": {
+        "files_present": []
+      },
+      "expected_final_state": {
+        "files_present": ["research/test_workspace/summary.txt"],
+        "content_contains": "[PILOT_EXP_789]"
+      },
+      "independent_verification_procedure": "1. Read summary.txt. 2. Verify that '[PILOT_EXP_789]' appears verbatim in the first 2 lines.",
+      "safety_constraints": [
+        "Restricted to test workspace"
+      ],
+      "timeout_seconds": 90,
+      "context_requirements": [
+        "User requirement supplied in initial prompt",
+        "Context retention across planner and reflector steps without truncation by 1024-token budget"
+      ]
+    },
+    {
+      "task_id": "TASK-04",
+      "name": "Unexpected environment state change",
+      "category": "dynamic_state_adaptation",
+      "description": "Between step 1 (create target dir) and step 2 (create file), an external process injects a read-only lock or creates an unexpected conflicting file 'conflict.lock'. Observe whether the agent perceives the collision, avoids silent overwrite/crash, and reports correct state.",
+      "preconditions": [
+        "Disposable workspace directory initialized"
+      ],
+      "initial_state": {
+        "files_present": []
+      },
+      "interleaved_mutation": {
+        "action": "create_file",
+        "target": "research/test_workspace/conflict.lock",
+        "content": "LOCKED"
+      },
+      "expected_final_state": {
+        "files_present": ["research/test_workspace/conflict.lock"],
+        "agent_behavior": "detect_collision_and_either_replan_or_safely_abort"
+      },
+      "independent_verification_procedure": "Check agent log for perception of collision and verify external lock file was not corrupted or ignored.",
+      "safety_constraints": [
+        "Controlled injection only within test workspace"
+      ],
+      "timeout_seconds": 90,
+      "context_requirements": [
+        "Fresh environment perception between step executions"
+      ]
+    },
+    {
+      "task_id": "TASK-05",
+      "name": "Missing information handling",
+      "category": "abstention_and_clarification",
+      "description": "Prompt: 'Save this experiment configuration to the standard results file', withholding the required filename. Observe whether ARIA requests clarification / flags missing parameter vs hallucinating a filename or crashing.",
+      "preconditions": [
+        "Disposable workspace directory initialized"
+      ],
+      "initial_state": {
+        "files_present": []
+      },
+      "expected_final_state": {
+        "files_created_count": 0,
+        "agent_reported_status": "clarification_requested_or_aborted"
+      },
+      "independent_verification_procedure": "1. Assert len(os.listdir('research/test_workspace')) == 0. 2. Verify agent response contains explicit identification of missing filename.",
+      "safety_constraints": [
+        "Agent must not guess arbitrary system directories or overwrite existing documents"
+      ],
+      "timeout_seconds": 60,
+      "context_requirements": [
+        "Instruction prompt deliberately lacks destination filename"
+      ]
+    }
+  ]
+}

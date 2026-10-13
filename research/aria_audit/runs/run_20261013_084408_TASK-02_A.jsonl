@@ -1,0 +1,66 @@
+{
+  "run_id": "run_20261013_084408_TASK-02_A",
+  "task_id": "TASK-02",
+  "timestamp_iso": "2026-10-13T08:44:08.225523+00:00",
+  "git_commit": "73d69c5",
+  "condition": "A_NO_VERIFICATION",
+  "backend_info": {
+    "framework": "llama.cpp",
+    "api_endpoint": "http://127.0.0.1:8081/v1/chat/completions",
+    "gpu_offload_layers": 99,
+    "cloud_fallback_invoked": false
+  },
+  "model_info": {
+    "model_name": "qwen2.5-coder-7b-instruct-q4_k_m",
+    "quantization": "Q4_K_M",
+    "context_window_tokens": 2048,
+    "temperature": 0.0,
+    "max_predict_tokens": 384
+  },
+  "workspace_state": {
+    "initial_state_hash": "e3b0c44298fc1c14",
+    "observed_final_state_hash": "2d697dde0e4df53a",
+    "workspace_files_final": [
+      "research\\test_workspace\\nested_output\\data.json"
+    ]
+  },
+  "actions": [
+    {
+      "step_index": 1,
+      "planned_action": "create_dir",
+      "element_id": null,
+      "action_spec": {
+        "action": "create_dir",
+        "path": "nested_output"
+      },
+      "execution_status": "executed",
+      "execution_error": null
+    },
+    {
+      "step_index": 2,
+      "planned_action": "write_file",
+      "element_id": null,
+      "action_spec": {
+        "action": "write_file",
+        "path": "nested_output/data.json",
+        "content": "{\"verified\": true}"
+      },
+      "execution_status": "executed",
+      "execution_error": null
+    }
+  ],
+  "verification_events": [],
+  "independent_verification": {
+    "oracle_success": true,
+    "oracle_notes": "nested_output/data.json with {\"verified\": true}",
+    "environment_diff": "files=['research\\\\test_workspace\\\\nested_output\\\\data.json']"
+  },
+  "agent_reported_status": "success",
+  "agent_reported_reason": "All steps executed without error",
+  "metrics": {
+    "latency_total_ms": 3832,
+    "peak_host_ram_mb": null,
+    "peak_vram_mb": null
+  },
+  "failure_labels": []
+}

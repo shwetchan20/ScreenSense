@@ -1,0 +1,89 @@
+{
+  "condition": "B_VERIFIED_REFLECTION",
+  "tasks_run": 1,
+  "oracle_passes": 1,
+  "records": [
+    {
+      "run_id": "run_20261013_084459_TASK-03_B",
+      "task_id": "TASK-03",
+      "timestamp_iso": "2026-10-13T08:44:59.757229+00:00",
+      "git_commit": "73d69c5",
+      "condition": "B_VERIFIED_REFLECTION",
+      "backend_info": {
+        "framework": "llama.cpp",
+        "api_endpoint": "http://127.0.0.1:8081/v1/chat/completions",
+        "gpu_offload_layers": 99,
+        "cloud_fallback_invoked": false
+      },
+      "model_info": {
+        "model_name": "qwen2.5-coder-7b-instruct-q4_k_m",
+        "quantization": "Q4_K_M",
+        "context_window_tokens": 2048,
+        "temperature": 0.0,
+        "max_predict_tokens": 384
+      },
+      "workspace_state": {
+        "initial_state_hash": "e3b0c44298fc1c14",
+        "observed_final_state_hash": "75ad617646103016",
+        "workspace_files_final": [
+          "research\\test_workspace\\summary.txt"
+        ]
+      },
+      "actions": [
+        {
+          "step_index": 1,
+          "planned_action": "write_file",
+          "element_id": null,
+          "action_spec": {
+            "action": "write_file",
+            "path": "summary.txt",
+            "content": "[PILOT_EXP_789]\n"
+          },
+          "execution_status": "executed",
+          "execution_error": null
+        },
+        {
+          "step_index": 2,
+          "planned_action": "type",
+          "element_id": null,
+          "action_spec": {
+            "action": "type",
+            "text": "This is the summary of the experiment."
+          },
+          "execution_status": "executed",
+          "execution_error": null
+        }
+      ],
+      "verification_events": [
+        {
+          "step_index": 1,
+          "verifier_verdict": true,
+          "verifier_observation": "The file 'summary.txt' has been successfully written with the content '[PILOT_EXP_789]\n' in the research/test_workspace directory.",
+          "reflector_decision": "next_step"
+        },
+        {
+          "step_index": 2,
+          "verifier_verdict": false,
+          "verifier_observation": "The action did not change the visible text or the workspace files. The text 'This is the summary of the experiment.' was not added to any file.",
+          "reflector_decision": "replan"
+        }
+      ],
+      "independent_verification": {
+        "oracle_success": true,
+        "oracle_notes": "[PILOT_EXP_789] found in first 2 lines",
+        "environment_diff": "files=['research\\\\test_workspace\\\\summary.txt']"
+      },
+      "agent_reported_status": "replan",
+      "agent_reported_reason": "Reflector decision=replan (replan not implemented in harness)",
+      "metrics": {
+        "latency_total_ms": 10999,
+        "peak_host_ram_mb": null,
+        "peak_vram_mb": null
+      },
+      "failure_labels": [
+        "G_VERIFICATION_FAILURE",
+        "I_RECOVERY_FAILURE"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "condition": "A_NO_VERIFICATION",
+  "tasks_run": 1,
+  "oracle_passes": 0,
+  "records": [
+    {
+      "run_id": "run_20261012_194828_TASK-01_A",
+      "task_id": "TASK-01",
+      "timestamp_iso": "2026-10-12T19:48:28.207098+00:00",
+      "git_commit": "73d69c5",
+      "condition": "A_NO_VERIFICATION",
+      "backend_info": {
+        "framework": "llama.cpp",
+        "api_endpoint": "http://127.0.0.1:8081/v1/chat/completions",
+        "gpu_offload_layers": 99,
+        "cloud_fallback_invoked": false
+      },
+      "model_info": {
+        "model_name": "qwen2.5-coder-7b-instruct-q4_k_m",
+        "quantization": "Q4_K_M",
+        "context_window_tokens": 2048,
+        "temperature": 0.0,
+        "max_predict_tokens": 384
+      },
+      "workspace_state": {
+        "initial_state_hash": "e3b0c44298fc1c14",
+        "observed_final_state_hash": "e3b0c44298fc1c14",
+        "workspace_files_final": []
+      },
+      "actions": [],
+      "verification_events": [],
+      "independent_verification": {
+        "oracle_success": false,
+        "oracle_notes": "report.txt does not exist",
+        "environment_diff": "files=[]"
+      },
+      "agent_reported_status": "not_run",
+      "agent_reported_reason": "dry-run: no execution performed",
+      "metrics": {
+        "latency_total_ms": 6430,
+        "peak_host_ram_mb": null,
+        "peak_vram_mb": null
+      },
+      "failure_labels": []
+    }
+  ]
+}

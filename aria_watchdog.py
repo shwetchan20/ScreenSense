@@ -17,15 +17,16 @@ def run() -> int:
     restart_delay = float(os.getenv("WATCHDOG_RESTART_DELAY_SECONDS", "3"))
     max_restarts = int(os.getenv("WATCHDOG_MAX_RESTARTS", "0"))  # 0 = infinite
     stop_on_clean_exit = _env_bool("WATCHDOG_STOP_ON_CLEAN_EXIT", True)
+    runtime_module = os.getenv("ARIA_RUNTIME_MODULE", "aria.main").strip() or "aria.main"
 
     restarts = 0
     while True:
-        print("[Watchdog] starting ScreenSense...")
-        proc = subprocess.Popen([sys.executable, "-m", "screensense.app"], cwd=".")
+        print(f"[Watchdog] starting ARIA runtime ({runtime_module})...")
+        proc = subprocess.Popen([sys.executable, "-m", runtime_module], cwd=".")
         proc.wait()
 
         code = int(proc.returncode or 0)
-        print(f"[Watchdog] ScreenSense exited with code {code}")
+        print(f"[Watchdog] ARIA runtime exited with code {code}")
 
         if stop_on_clean_exit and code == 0:
             print("[Watchdog] clean exit; stopping.")

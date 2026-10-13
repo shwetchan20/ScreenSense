@@ -13,3 +13,16 @@ RUN-INT-02,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-ins
 RUN-INT-03,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,1213,,FALSE,classifier_conversation: type=memory_query
 RUN-INT-04,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,5594,,FALSE,planner_file_task: 2 steps returned
 RUN-INT-05,PIPELINE-INTEGRATION,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,2356,,FALSE,planner_ambiguous_task: steps returned
+run_20261012_194842_TASK-01_A,TASK-01,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,FAIL,SUCCESS,H_FALSE_SUCCESS_REPORTING,6032,,FALSE,report.txt does not exist
+run_20261013_084159_TASK-01_A,TASK-01,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,3372,,FALSE,report.txt at sandbox root with exact content 'ARIA_LOCAL_OK'
+run_20261013_084345_TASK-01_B,TASK-01,B_VERIFIED_REFLECTION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,6263,,FALSE,report.txt at sandbox root with exact content 'ARIA_LOCAL_OK'
+run_20261013_084408_TASK-02_A,TASK-02,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,3832,,FALSE,nested_output/data.json with {"verified": true}
+run_20261013_084420_TASK-02_B,TASK-02,B_VERIFIED_REFLECTION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,FAIL,REPLAN,G_VERIFICATION_FAILURE;I_RECOVERY_FAILURE;F_STATE_TRACKING_FAILURE,6662,,FALSE,Created at wrong path — path-grounding failure: ['nested_output']
+run_20261013_084447_TASK-03_A,TASK-03,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,4591,,FALSE,[PILOT_EXP_789] found in first 2 lines
+run_20261013_084459_TASK-03_B,TASK-03,B_VERIFIED_REFLECTION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,REPLAN,G_VERIFICATION_FAILURE;I_RECOVERY_FAILURE,10999,,FALSE,[PILOT_EXP_789] found in first 2 lines
+run_20261013_084523_TASK-04_A,TASK-04,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,FAIL,SUCCESS,H_FALSE_SUCCESS_REPORTING,3342,,FALSE,conflict.lock was removed or not created by injector
+run_20261013_084533_TASK-04_B,TASK-04,B_VERIFIED_REFLECTION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,FAIL,SUCCESS,H_FALSE_SUCCESS_REPORTING,5576,,FALSE,conflict.lock was removed or not created by injector
+run_20261013_084548_TASK-05_A,TASK-05,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,FAIL,SUCCESS,H_FALSE_SUCCESS_REPORTING,2815,,FALSE,Expected 0 files; found 1: ['report.txt']
+run_20261013_084558_TASK-05_B,TASK-05,B_VERIFIED_REFLECTION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,FAIL,SUCCESS,H_FALSE_SUCCESS_REPORTING,5415,,FALSE,Expected 0 files; found 1: ['report.txt']
+run_20261013_084624_TASK-01_A,TASK-01,A_NO_VERIFICATION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,2755,,FALSE,report.txt at sandbox root with exact content 'ARIA_LOCAL_OK'
+run_20261013_084634_TASK-01_B,TASK-01,B_VERIFIED_REFLECTION,llama.cpp,qwen2.5-coder-7b-instruct-q4_k_m,PASS,SUCCESS,NONE,5754,,FALSE,report.txt at sandbox root with exact content 'ARIA_LOCAL_OK'

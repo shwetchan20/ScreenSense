@@ -1,0 +1,63 @@
+{
+  "run_id": "run_20261013_084420_TASK-02_B",
+  "task_id": "TASK-02",
+  "timestamp_iso": "2026-10-13T08:44:20.025301+00:00",
+  "git_commit": "73d69c5",
+  "condition": "B_VERIFIED_REFLECTION",
+  "backend_info": {
+    "framework": "llama.cpp",
+    "api_endpoint": "http://127.0.0.1:8081/v1/chat/completions",
+    "gpu_offload_layers": 99,
+    "cloud_fallback_invoked": false
+  },
+  "model_info": {
+    "model_name": "qwen2.5-coder-7b-instruct-q4_k_m",
+    "quantization": "Q4_K_M",
+    "context_window_tokens": 2048,
+    "temperature": 0.0,
+    "max_predict_tokens": 384
+  },
+  "workspace_state": {
+    "initial_state_hash": "e3b0c44298fc1c14",
+    "observed_final_state_hash": "e3b0c44298fc1c14",
+    "workspace_files_final": []
+  },
+  "actions": [
+    {
+      "step_index": 1,
+      "planned_action": "create_dir",
+      "element_id": null,
+      "action_spec": {
+        "action": "create_dir",
+        "path": "nested_output"
+      },
+      "execution_status": "executed",
+      "execution_error": null
+    }
+  ],
+  "verification_events": [
+    {
+      "step_index": 1,
+      "verifier_verdict": false,
+      "verifier_observation": "The action to create a directory at 'nested_output' did not succeed. The 'workspace_files' array remains empty, indicating that no new files or directories were added to the workspace.",
+      "reflector_decision": "replan"
+    }
+  ],
+  "independent_verification": {
+    "oracle_success": false,
+    "oracle_notes": "Created at wrong path — path-grounding failure: ['nested_output']",
+    "environment_diff": "files=[]"
+  },
+  "agent_reported_status": "replan",
+  "agent_reported_reason": "Reflector decision=replan (replan not implemented in harness)",
+  "metrics": {
+    "latency_total_ms": 6662,
+    "peak_host_ram_mb": null,
+    "peak_vram_mb": null
+  },
+  "failure_labels": [
+    "G_VERIFICATION_FAILURE",
+    "I_RECOVERY_FAILURE",
+    "F_STATE_TRACKING_FAILURE"
+  ]
+}
